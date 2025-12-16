@@ -2,9 +2,7 @@
 
 **Combat fake news and misinformation by verifying the authenticity of images with cryptographic provenance data.**
 
-Origin Lens analyzes images for C2PA (Coalition for Content Provenance and Authenticity) Content Credentials and EXIF metadata to detect AI-generated content, verify digital signatures, and reveal the complete edit history of any image. All verification happens on your device with zero data collection.
-
-Built with a modern Material 3 design, Origin Lens provides powerful media verification tools in a clean, intuitive interface.
+Origin Lens analyzes images for C2PA (Coalition for Content Provenance and Authenticity) Content Credentials and EXIF metadata to detect AI-generated content, verify digital signatures, and reveal the complete edit history of any image. Core verification happens on your device. An optional reverse image search feature uses external services to help detect out-of-context images.
 
 ---
 
@@ -41,7 +39,7 @@ See every action performed on an image.
 - **Timestamp information** – When each action occurred
 - **Digital source type** – Understand the origin (camera capture, screen capture, AI generation, etc.)
 
-### � EXIF Metadata Analysis
+### EXIF Metadata Analysis
 
 Access detailed image metadata.
 
@@ -50,6 +48,18 @@ Access detailed image metadata.
 - **Artist and copyright** – Creator attribution
 - **Date and time** – When the photo was taken
 - **AI detection markers** – Prompt parameters, generation settings, and AI tool signatures
+
+### 🔎 Reverse Image Search (Optional)
+
+Find where images have appeared online.
+
+- **Multi-engine search** – Searches across Bing, Yandex, and Google
+- **Context verification** – Detect out-of-context or misattributed images
+- **Smart filtering** – Removes irrelevant results like login pages
+- **Privacy notice** – Clear warning before uploading to external services
+- **Bring your own keys** – Use your own API keys for enhanced privacy
+
+> **Note:** This optional feature uploads images to external search services. A clear privacy note is shown before use.
 
 ### 📤 Multiple Input Sources
 
@@ -82,12 +92,13 @@ Analyze images directly from the web without downloading them first.
 
 ## 🔒 Privacy You Can Trust
 
-**All analysis happens on your device. Your images never leave your phone.**
+**Core verification happens on your device. Optional features use external services with clear disclosure.**
 
-- ✅ **100% on-device verification** – All C2PA and EXIF analysis runs locally
+- ✅ **On-device verification** – All C2PA and EXIF analysis runs locally
 - ✅ **Zero data collection** – No analytics, no tracking, no servers
 - ✅ **No account required** – Works immediately after install
-- ✅ **No image uploads** – Your photos stay on your device
+- ✅ **Transparent remote features** – Reverse image search clearly warns before uploading
+- ✅ **Bring your own API keys** – Use personal keys for external services
 - ✅ **Privacy first** – Read our [Privacy Policy](https://github.com/aloth/origin-lens/blob/main/privacy_policy.md)
 
 ---

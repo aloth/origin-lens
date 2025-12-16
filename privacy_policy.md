@@ -8,7 +8,16 @@ We comply with applicable privacy laws and regulations including the General Dat
 
 ## 1. Our Guiding Principle: We Don't Collect Your Data
 
-Origin Lens is a privacy-first media verification utility. We do not collect, store, track, or share any personal data, images, or analysis results from you. The App's core function is to analyze images for C2PA Content Credentials and EXIF metadata locally on your device, and we have no access to your photos or the images you analyze.
+Origin Lens is a privacy-first media verification utility. We do not collect, store, track, or share any personal data from you. The App's core functions – analyzing images for C2PA Content Credentials and EXIF metadata – run entirely on your device, and we have no access to your photos or the images you analyze.
+
+### Optional Features Using External Services
+
+Origin Lens includes an optional **Reverse Image Search** feature that, when activated by you, uploads images to third-party search services (such as SerpAPI, which uses Google, Bing, and Yandex) to find where images have appeared online. This feature:
+
+- **Requires explicit user action** – You must tap "Search Image Context" to use it
+- **Shows a clear privacy warning** – Before any upload, a notice explains that images will be sent to external services
+- **Is completely optional** – Core C2PA and EXIF verification works without it
+- **Supports user-provided API keys** – You can use your own API keys for enhanced privacy control
 
 ## 2. Information We Do Not Collect
 
@@ -24,25 +33,46 @@ Since our App processes all image analysis locally on your device, we do not col
 
 ## 3. How the App Works
 
-Origin Lens operates entirely on your device. When you select an image from your gallery, files, or a URL, all C2PA verification and EXIF parsing occurs locally using native Rust libraries. No information is sent to our servers or to any third party. We do not operate any backend servers for the purpose of data collection or image processing.
+### Core Verification (On-Device)
 
-### 2.1. Data You Provide and Store Locally
-Any custom tracking parameters you add to the App's blocklist are **stored locally on your device** and are only accessed by the App to perform its function. We do not transmit this list to our servers, and we do not have access to it.
+Origin Lens performs C2PA verification and EXIF metadata parsing entirely on your device. When you select an image from your gallery, files, or a URL, all cryptographic verification occurs locally using native Rust libraries. No information about these analyses is sent to our servers or to any third party.
 
-### 2.2. URL Processing
-The Trackless Links Safari Extension processes URLs as you browse **entirely on your device**. The content of these URLs is never logged, stored, or transmitted off your device by us. The processing is ephemeral and happens in real-time within the secure, sandboxed environment provided by Apple for Safari Web Extensions.
+### Reverse Image Search (Optional, Uses External Services)
 
-## 3. How We Use Information
+If you choose to use the Reverse Image Search feature, the App will upload your image to third-party search services to find where it has appeared online. Specifically:
 
-The only information the App uses is the list of tracking parameters (both default and custom) to perform its core function: cleaning URLs.
+- **SerpAPI** (serpapi.com) – A search API service that queries Google, Bing, and Yandex image search
+- **imgbb** (imgbb.com) – A temporary image hosting service used to provide a URL for local images
+
+These services have their own privacy policies:
+- SerpAPI: https://serpapi.com/privacy-policy
+- imgbb: https://imgbb.com/privacy
+
+Images uploaded for reverse search are:
+- Uploaded only when you explicitly request a context search
+- Used solely to perform the reverse image search
+- Subject to the third-party services' data retention policies
+
+You can use your own API keys for these services in the App's Settings, giving you direct control over your relationship with these providers.
 
 ## 4. Third-Party Services
 
-Our App does not integrate with any third-party analytics, advertising, or tracking services. There are no embedded SDKs from companies like Google Analytics, Facebook, or any ad networks.
+### Services Used by the App
 
-If you choose to analyze an image from a URL, the App will download the image directly to your device for local analysis only. The image is not stored permanently or sent to any third-party servers. Any interaction with external URLs is initiated solely by you and processed locally.
+Origin Lens integrates with the following third-party services for the optional Reverse Image Search feature:
 
-If in the future we add optional features (such as sharing verification results or exporting analysis data), those features would use the standard iOS sharing mechanisms, and we still would not collect your data. Any data you choose to share with third-party apps through iOS sharing would be governed by those third parties' privacy policies.
+- **SerpAPI** (serpapi.com) – Provides reverse image search results from Google, Bing, and Yandex
+- **imgbb** (imgbb.com) – Provides temporary image hosting for local images during reverse search
+
+These services are only contacted when you explicitly use the Reverse Image Search feature. The App includes default API keys to enable this functionality, but you can provide your own API keys in Settings for greater privacy control.
+
+### No Analytics or Advertising
+
+We do not integrate with any analytics, advertising, or tracking services. There are no embedded SDKs from companies like Google Analytics, Facebook, or any ad networks.
+
+### URL Image Downloads
+
+If you choose to analyze an image from a URL, the App will download the image directly to your device for local analysis only. The image is not permanently stored or sent to any of our servers.
 
 ## 5. Permissions Required
 
