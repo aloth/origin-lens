@@ -2,7 +2,7 @@
 
 **Effective Date:** December 16, 2025
 
-At Origin Lens ("we," "us," or "our"), operated by Alexander Loth and Dominique Conceicaorosario, we are committed to protecting your privacy. This Privacy Policy explains our practices regarding the collection, use, and disclosure of information when you use our mobile application, Origin Lens ("App"). Our policy is simple because our App is designed from the ground up to protect your privacy.
+At Origin Lens ("we," "us," or "our"), operated by Alexander Loth and Dominique Conceicao Rosario, we are committed to protecting your privacy. This Privacy Policy explains our practices regarding the collection, use, and disclosure of information when you use our mobile application, Origin Lens ("App"). Our policy is simple because our App is designed from the ground up to protect your privacy.
 
 We comply with applicable privacy laws and regulations including the General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA).
 

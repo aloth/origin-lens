@@ -6,11 +6,17 @@ Origin Lens analyzes images for C2PA (Coalition for Content Provenance and Authe
 
 ---
 
+## 📲 Download
+
+[![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/origin-lens/id6756628121?platform=iphone)
+
+---
+
 ## ✨ What Makes Origin Lens Different?
 
 Origin Lens goes beyond simple metadata viewing. It performs cryptographic verification of Content Credentials, detects AI-generated content from multiple sources, and provides comprehensive provenance analysis. All verification happens locally on your device.
 
-### � C2PA Content Credentials Verification
+### C2PA Content Credentials Verification
 
 Cryptographically verify the authenticity of images.
 
@@ -113,7 +119,44 @@ Help make Origin Lens better:
 
 ---
 
-## 📚 Learn More
+## � Related Research
+
+Origin Lens is part of a broader research initiative investigating the intersection of generative AI and misinformation. We invite researchers, practitioners, and policymakers to explore our related work and contribute to advancing this critical field.
+
+### JudgeGPT
+
+Visit our sister research project [JudgeGPT](https://github.com/aloth/JudgeGPT), which explores AI-based approaches to detecting and evaluating misinformation.
+
+### Academic Publication
+
+Our research on the dual nature of generative AI in the context of fake news has been published on arXiv. If you find this work relevant to your research, please consider citing our paper:
+
+> **Blessing or Curse? A Survey on the Impact of Generative AI on Fake News**  
+> Alexander Loth, Martin Kappes, Marc-Oliver Pahl (2024)  
+> arXiv:2404.03021 [cs.CL]
+
+```bibtex
+@misc{loth2024blessing,
+      title={Blessing or curse? A survey on the Impact of Generative AI on Fake News}, 
+      author={Alexander Loth and Martin Kappes and Marc-Oliver Pahl},
+      year={2024},
+      eprint={2404.03021},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
+
+### Call for Participation
+
+We are conducting an expert survey to gather insights on generative-AI–driven disinformation. Your expertise would be invaluable to this academic research effort.
+
+**[Participate in the Expert Survey](https://forms.gle/EUdbkEtZpEuPbVVz5)**
+
+This survey explores expert perceptions of generative-AI–driven disinformation and aims to inform future countermeasures and policy recommendations.
+
+---
+
+## �📚 Learn More
 
 - [C2PA Coalition](https://c2pa.org/) – Learn about Content Credentials technology
 - [Content Authenticity Initiative](https://contentauthenticity.org/) – Adobe's initiative for content provenance
