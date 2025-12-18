@@ -1,4 +1,5 @@
 # Origin Lens – Verify Image Authenticity with C2PA Content Credentials
+[![arXiv](https://img.shields.io/badge/arXiv-2404.03021-B31B1B.svg)](https://arxiv.org/abs/2404.03021)
 
 **Combat fake news and misinformation by verifying the authenticity of images with cryptographic provenance data.**
 
@@ -7,6 +8,8 @@ Origin Lens analyzes images for C2PA (Coalition for Content Provenance and Authe
 ---
 
 ## 📲 Download
+
+Get Origin Lens on your iPhone or iPad to start verifying image authenticity today:
 
 [![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/origin-lens/id6756628121?platform=iphone)
 
@@ -119,7 +122,7 @@ Help make Origin Lens better:
 
 ---
 
-## � Related Research
+## Related Research
 
 Origin Lens is part of a broader research initiative investigating the intersection of generative AI and misinformation. We invite researchers, practitioners, and policymakers to explore our related work and contribute to advancing this critical field.
 
@@ -156,7 +159,7 @@ This survey explores expert perceptions of generative-AI–driven disinformation
 
 ---
 
-## �📚 Learn More
+## Learn More
 
 - [C2PA Coalition](https://c2pa.org/) – Learn about Content Credentials technology
 - [Content Authenticity Initiative](https://contentauthenticity.org/) – Adobe's initiative for content provenance
