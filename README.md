@@ -3,7 +3,7 @@
 
 **Combat fake news and misinformation by verifying the authenticity of images with cryptographic provenance data.**
 
-Origin Lens analyzes images for C2PA (Coalition for Content Provenance and Authenticity) Content Credentials and EXIF metadata to detect AI-generated content, verify digital signatures, and reveal the complete edit history of any image. Core verification happens on your device. An optional reverse image search feature uses external services to help detect out-of-context images.
+Origin Lens analyzes images for C2PA (Coalition for Content Provenance and Authenticity) Content Credentials, EXIF metadata and SynthID to detect AI-generated content, verify digital signatures, and reveal the complete edit history of any image. Core verification happens on your device. An optional reverse image search feature uses external services to help detect out-of-context images.
 
 ---
 
@@ -35,9 +35,9 @@ Identify AI-generated content from multiple sources.
 
 - **C2PA assertions analysis** – Detect AI generators from standard Content Credentials
 - **EXIF metadata parsing** – Find AI signatures in image metadata
-- **Dual-source detection** – Combines C2PA and EXIF for comprehensive coverage
+- **Multi-source detection** – Combines C2PA, EXIF, and SynthID for comprehensive coverage
 - **50+ AI generators detected** – Midjourney, DALL-E, Stable Diffusion, Adobe Firefly, and more
-- **Detection source transparency** – Shows whether AI was detected via C2PA, EXIF, or both
+- **Detection source transparency** – Shows whether AI was detected via C2PA, EXIF, or SynthID
 
 ### 📜 Complete Edit History Timeline
 
