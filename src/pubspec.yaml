@@ -1,0 +1,47 @@
+name: origin_lens
+description: "Verify media authenticity with C2PA metadata detection."
+publish_to: 'none'
+
+version: 1.1.0+4
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  url_launcher: ^6.3.2
+  image_picker: ^1.0.7
+  file_picker: ^8.0.0
+  path_provider: ^2.1.2
+  http: ^1.2.0
+  flutter_rust_bridge: 2.11.1
+  rust_lib_origin_lens:
+    path: rust_builder
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+  flutter_dotenv: ^6.0.0
+  receive_sharing_intent: ^1.8.1
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.8
+  freezed: ^2.5.8
+  json_serializable: ^6.7.1
+  integration_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+
+flutter_launcher_icons:
+  ios: true
+  image_path: "origin_lens_app_icon.png"
+  remove_alpha_ios: true

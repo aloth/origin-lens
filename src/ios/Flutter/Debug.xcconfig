@@ -1,0 +1,2 @@
+#include? "Pods/Target Support Files/Pods-Origin Lens/Pods-Origin Lens.debug.xcconfig"
+#include "Generated.xcconfig"

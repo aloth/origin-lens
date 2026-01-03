@@ -1,0 +1,8 @@
+rust_input: crate::api
+rust_root: rust_builder/rust/
+dart_output: lib/src/rust/
+c_output: ios/Runner/bridge_generated.h
+extra_headers: |
+  #include <stdbool.h>
+  #include <stdint.h>
+  #include <stdlib.h>

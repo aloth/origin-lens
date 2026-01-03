@@ -1,4 +1,6 @@
 # Origin Lens – Verify Image Authenticity with C2PA Content Credentials
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![arXiv](https://img.shields.io/badge/arXiv-2404.03021-B31B1B.svg)](https://arxiv.org/abs/2404.03021)
 
 **Combat fake news and misinformation by verifying the authenticity of images with cryptographic provenance data.**
@@ -112,7 +114,15 @@ Analyze images directly from the web without downloading them first.
 
 ---
 
-## 🛠️ Support & Feedback
+## Open Source
+
+Origin Lens is open source software, licensed under the [GNU General Public License v3.0](LICENSE).
+
+**Want to contribute or build from source?** See the [Build Instructions](src/README.md) for development setup, architecture details, and contribution guidelines.
+
+---
+
+## Support & Feedback
 
 Help make Origin Lens better:
 

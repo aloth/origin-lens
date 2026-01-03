@@ -1,0 +1,9 @@
+# This file configures Cargokit for building the Rust library
+# https://github.com/aspect-build/rules_rust
+
+[package]
+name = "rust_lib_origin_lens"
+version = "0.1.0"
+
+[source]
+path = "rust"

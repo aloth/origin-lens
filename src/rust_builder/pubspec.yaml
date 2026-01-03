@@ -1,0 +1,22 @@
+name: rust_lib_origin_lens
+description: Rust library for Origin Lens C2PA analysis
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_rust_bridge: ^2.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        ffiPlugin: true
+      ios:
+        ffiPlugin: true
+      macos:
+        ffiPlugin: true
