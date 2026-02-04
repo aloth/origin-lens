@@ -1,0 +1,56 @@
+cff-version: 1.2.0
+message: "If you use Origin Lens or its underlying research in your work, please cite our paper."
+type: software
+title: "Origin Lens"
+authors:
+  - family-names: Loth
+    given-names: Alexander
+    orcid: https://orcid.org/0000-0003-4157-7557
+  - family-names: Rosario
+    given-names: Dominique Conceicao
+  - family-names: Ebinger
+    given-names: Peter
+  - family-names: Kappes
+    given-names: Martin
+  - family-names: Pahl
+    given-names: Marc-Oliver
+date-released: 2025-01-15
+url: https://github.com/aloth/origin-lens
+repository-code: https://github.com/aloth/origin-lens
+license: GPL-3.0
+keywords:
+  - C2PA
+  - content credentials
+  - image authenticity
+  - AI detection
+  - provenance
+  - misinformation
+  - privacy
+  - iOS
+preferred-citation:
+  type: conference-paper
+  authors:
+    - family-names: Loth
+      given-names: Alexander
+      orcid: https://orcid.org/0000-0003-4157-7557
+    - family-names: Rosario
+      given-names: Dominique Conceicao
+    - family-names: Ebinger
+      given-names: Peter
+    - family-names: Kappes
+      given-names: Martin
+    - family-names: Pahl
+      given-names: Marc-Oliver
+  title: "Origin Lens: A Privacy-First Mobile Framework for Cryptographic Image Provenance and AI Detection"
+  collection-title: "Companion Proceedings of the ACM Web Conference 2026 (WWW '26 Companion)"
+  year: 2026
+  month: 4
+  publisher:
+    name: ACM
+    city: New York, NY, USA
+  conference:
+    name: "ACM Web Conference 2026"
+    city: Dubai
+    country: United Arab Emirates
+  url: https://arxiv.org/abs/2602.03423
+  notes: "To appear. Also available as arXiv:2602.03423"

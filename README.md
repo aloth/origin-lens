@@ -1,7 +1,7 @@
 # Origin Lens – Verify Image Authenticity with C2PA Content Credentials
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![arXiv](https://img.shields.io/badge/arXiv-2404.03021-B31B1B.svg)](https://arxiv.org/abs/2404.03021)
+[![Paper](https://img.shields.io/badge/Paper-arXiv:2602.03423-B31B1B.svg)](https://arxiv.org/abs/2602.03423)
 
 **Combat fake news and misinformation by verifying the authenticity of images with cryptographic provenance data.**
 
@@ -136,13 +136,37 @@ Help make Origin Lens better:
 
 Origin Lens is part of a broader research initiative investigating the intersection of generative AI and misinformation. We invite researchers, practitioners, and policymakers to explore our related work and contribute to advancing this critical field.
 
+### How to Cite
+
+If you use Origin Lens or its underlying research in your work, please cite our paper:
+
+> **Origin Lens: A Privacy-First Mobile Framework for Cryptographic Image Provenance and AI Detection**  
+> Alexander Loth, Dominique Conceicao Rosario, Peter Ebinger, Martin Kappes, Marc-Oliver Pahl  
+> ACM Web Conference 2026 (WWW '26 Companion)  
+> arXiv:2602.03423
+
+```bibtex
+@inproceedings{loth2026originlens,
+  author    = {Loth, Alexander and Rosario, Dominique Conceicao and Ebinger, Peter and Kappes, Martin and Pahl, Marc-Oliver},
+  title     = {Origin Lens: A Privacy-First Mobile Framework for Cryptographic Image Provenance and AI Detection},
+  booktitle = {Companion Proceedings of the ACM Web Conference 2026 (WWW '26 Companion)},
+  year      = {2026},
+  month     = apr,
+  publisher = {ACM},
+  address   = {New York, NY, USA},
+  location  = {Dubai, United Arab Emirates},
+  url       = {https://arxiv.org/abs/2602.03423},
+  note      = {To appear. Also available as arXiv:2602.03423}
+}
+```
+
 ### JudgeGPT
 
 Visit our sister research project [JudgeGPT](https://github.com/aloth/JudgeGPT), which explores AI-based approaches to detecting and evaluating misinformation.
 
-### Academic Publication
+### Related Publication
 
-Our research on the dual nature of generative AI in the context of fake news has been published on arXiv. If you find this work relevant to your research, please consider citing our paper:
+Our survey on the dual nature of generative AI in the context of fake news:
 
 > **Blessing or Curse? A Survey on the Impact of Generative AI on Fake News**  
 > Alexander Loth, Martin Kappes, Marc-Oliver Pahl (2024)  
