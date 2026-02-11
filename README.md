@@ -3,6 +3,10 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Paper](https://img.shields.io/badge/Paper-arXiv:2602.03423-B31B1B.svg)](https://arxiv.org/abs/2602.03423)
 
+<p align="center">
+  <img src="figures/origin-lens-image-verification-ai-detection-hero.png" alt="Origin Lens — AI-powered image verification and content authenticity on mobile" width="400">
+</p>
+
 **Combat fake news and misinformation by verifying the authenticity of images with cryptographic provenance data.**
 
 Origin Lens analyzes images for C2PA (Coalition for Content Provenance and Authenticity) Content Credentials, EXIF metadata and SynthID to detect AI-generated content, verify digital signatures, and reveal the complete edit history of any image. Core verification happens on your device. An optional reverse image search feature uses external services to help detect out-of-context images.
