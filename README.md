@@ -4,7 +4,7 @@
 [![Paper](https://img.shields.io/badge/Paper-arXiv:2602.03423-B31B1B.svg)](https://arxiv.org/abs/2602.03423)
 
 <p align="center">
-  <img src="figures/origin-lens-image-verification-ai-detection-hero.png" alt="Origin Lens — AI-powered image verification and content authenticity on mobile" width="400">
+  <img src="figures/origin-lens-c2pa-image-verification-privacy-ai-detection-wide.png" alt="Origin Lens — AI-powered image verification and content authenticity on mobile" width="700">
 </p>
 
 **Combat fake news and misinformation by verifying the authenticity of images with cryptographic provenance data.**
