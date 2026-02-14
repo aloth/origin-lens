@@ -2,6 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Paper](https://img.shields.io/badge/Paper-arXiv:2602.03423-B31B1B.svg)](https://arxiv.org/abs/2602.03423)
+[![Mastodon](https://img.shields.io/badge/Mastodon-@xlth-6364FF?logo=mastodon&logoColor=white)](https://mastodon.social/@xlth)
 
 <p align="center">
   <img src="figures/origin-lens-c2pa-image-verification-privacy-ai-detection-wide.png" alt="Origin Lens — AI-powered image verification and content authenticity on mobile" width="700">
