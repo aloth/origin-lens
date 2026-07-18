@@ -145,23 +145,23 @@ Origin Lens is part of a broader research initiative investigating the intersect
 
 If you use Origin Lens or its underlying research in your work, please cite our paper:
 
-> **Origin Lens: A Privacy-First Mobile Framework for Cryptographic Image Provenance and AI Detection**  
+> **Origin Lens: Reclaiming Trust on the AI-Mediated Web Through On-Device Image Provenance Verification**  
 > Alexander Loth, Dominique Conceicao Rosario, Peter Ebinger, Martin Kappes, Marc-Oliver Pahl  
-> ACM Web Conference 2026 (WWW '26 Companion)  
-> arXiv:2602.03423
+> 18th ACM Web Science Conference (WebSci Companion '26), Braunschweig, Germany  
+> [doi:10.1145/3795513.3806658](https://doi.org/10.1145/3795513.3806658)
 
 ```bibtex
-@inproceedings{loth2026originlens,
+@inproceedings{loth2026originlenswebsci,
   author    = {Loth, Alexander and Rosario, Dominique Conceicao and Ebinger, Peter and Kappes, Martin and Pahl, Marc-Oliver},
-  title     = {Origin Lens: A Privacy-First Mobile Framework for Cryptographic Image Provenance and AI Detection},
-  booktitle = {Companion Proceedings of the ACM Web Conference 2026 (WWW '26 Companion)},
+  title     = {Origin Lens: Reclaiming Trust on the AI-Mediated Web Through On-Device Image Provenance Verification},
+  booktitle = {18th ACM Web Science Conference (WebSci Companion '26)},
   year      = {2026},
-  month     = apr,
+  month     = may,
   publisher = {ACM},
   address   = {New York, NY, USA},
-  location  = {Dubai, United Arab Emirates},
-  url       = {https://arxiv.org/abs/2602.03423},
-  note      = {To appear. Also available as arXiv:2602.03423}
+  location  = {Braunschweig, Germany},
+  pages     = {1--5},
+  doi       = {10.1145/3795513.3806658}
 }
 ```
 
