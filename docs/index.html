@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Origin Lens — C2PA Image Verification & AI Detection for iPhone & iPad</title>
+<meta name="description" content="Origin Lens verifies image authenticity with C2PA Content Credentials, EXIF metadata and SynthID. Detect AI-generated content, verify digital signatures, and reveal full edit history. Privacy-first, on-device iOS app.">
+<link rel="canonical" href="https://aloth.github.io/origin-lens/">
+<meta property="og:title" content="Origin Lens — C2PA Image Verification & AI Detection">
+<meta property="og:description" content="Verify image authenticity with cryptographic C2PA provenance. Detect AI-generated content on-device. Free, open-source iOS app.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aloth.github.io/origin-lens/">
+<meta property="og:image" content="https://raw.githubusercontent.com/aloth/origin-lens/main/figures/origin-lens-image-verification-ai-detection-hero.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  "name": "Origin Lens",
+  "operatingSystem": "iOS",
+  "applicationCategory": "https://schema.org/UtilitiesApplication",
+  "author": { "@type": "Person", "name": "Alexander Loth", "url": "https://alexloth.com/" },
+  "image": "https://raw.githubusercontent.com/aloth/origin-lens/main/figures/origin-lens-image-verification-ai-detection-hero.png",
+  "description": "Origin Lens verifies image authenticity with C2PA Content Credentials, EXIF metadata and SynthID. Detect AI-generated content, verify digital signatures, and reveal full edit history. Privacy-first, on-device iOS app.",
+  "url": "https://aloth.github.io/origin-lens/",
+  "installUrl": "https://apps.apple.com/us/app/origin-lens/id6756628121",
+  "license": "https://www.gnu.org/licenses/gpl-3.0",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "citation": "https://arxiv.org/abs/2602.03423",
+  "sameAs": "https://github.com/aloth/origin-lens"
+}
+</script>
+<style>
+:root{--ink:#1a1a2e;--muted:#5a5a72;--teal:#2a9d8f;--bg:#f7f9fc;--card:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+.wrap{max-width:900px;margin:0 auto;padding:0 24px}
+.hero{text-align:center;padding:80px 24px 40px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:#fff;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:24px;border:1px solid #e2e8f0}
+h1{font-size:44px;line-height:1.15;margin-bottom:16px;letter-spacing:-1px}
+h1 span{color:var(--teal)}
+.hero p{font-size:19px;color:var(--muted);max-width:640px;margin:0 auto 28px}
+.app-store-btn img{height:54px}
+.hero-image{max-width:100%;margin-top:40px;border-radius:16px}
+.features{padding:40px 0}
+.features h2{text-align:center;font-size:32px;margin-bottom:8px}
+.subtitle{text-align:center;color:var(--muted);margin-bottom:40px}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.feature-card{background:var(--card);border-radius:16px;padding:28px;border:1px solid #e8edf3}
+.feature-icon{font-size:32px;margin-bottom:12px}
+.feature-card h3{font-size:18px;margin-bottom:8px}
+.feature-card p{font-size:15px;color:var(--muted)}
+.cta{text-align:center;padding:60px 24px}
+.paper{text-align:center;padding:0 24px 40px;color:var(--muted);font-size:15px}
+.paper a{color:var(--teal)}
+footer{text-align:center;padding:40px 24px;color:var(--muted);font-size:14px;border-top:1px solid #e8edf3}
+footer a{color:var(--teal);text-decoration:none}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-badge">🔍 C2PA · EXIF · SynthID · On-device</div>
+  <h1>Verify what's real.<br><span>Detect what's fake.</span></h1>
+  <p>Origin Lens analyzes images for C2PA Content Credentials, EXIF metadata and SynthID to detect AI-generated content, verify digital signatures, and reveal the complete edit history of any image. Core verification happens on your device.</p>
+  <a href="https://apps.apple.com/us/app/origin-lens/id6756628121" class="app-store-btn">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store">
+  </a>
+  <img src="https://raw.githubusercontent.com/aloth/origin-lens/main/figures/origin-lens-image-verification-ai-detection-hero.png" alt="Origin Lens app verifying image authenticity and content provenance" class="hero-image" loading="eager">
+</section>
+
+<section class="features wrap">
+  <h2>Cryptographic provenance, in your pocket</h2>
+  <p class="subtitle">Beyond metadata viewing - real verification of Content Credentials.</p>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🔐</div>
+      <h3>C2PA Content Credentials</h3>
+      <p>Cryptographically verify Content Credentials to confirm who created an image and how it was edited.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3>AI-Generation Detection</h3>
+      <p>Detect AI-generated content from multiple sources, including SynthID watermark signals.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗂️</div>
+      <h3>Full EXIF & Edit History</h3>
+      <p>Reveal complete provenance and metadata, exposing the entire edit trail of any image.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>On-Device & Private</h3>
+      <p>Core verification runs locally on your iPhone or iPad. Your images stay yours.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <a href="https://apps.apple.com/us/app/origin-lens/id6756628121" class="app-store-btn">
+    <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store">
+  </a>
+</section>
+
+<p class="paper">Research paper: <a href="https://arxiv.org/abs/2602.03423">arXiv:2602.03423</a> · Open source (GPLv3)</p>
+
+<footer>
+  <p>Origin Lens by <a href="https://alexloth.com/">Alexander Loth</a> · <a href="https://github.com/aloth/origin-lens">GitHub</a> · <a href="https://mastodon.social/@xlth">Mastodon</a></p>
+</footer>
+
+</body>
+</html>
