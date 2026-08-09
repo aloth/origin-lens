@@ -11,7 +11,7 @@ A new Flutter FFI plugin project.
                        DESC
   s.homepage         = 'https://github.com/aloth/origin-lens'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'Alexander Loth and Dominique Conceicao Rosario' => 'support+originlens@alexloth.com' }
+  s.author           = { 'Alexander Loth and Dominique Conceicao Rosario' => 'support@alexloth.com' }
 
   # This will ensure the source files in Classes/ are included in the native
   # builds of apps using this FFI plugin. Podspec does not support://

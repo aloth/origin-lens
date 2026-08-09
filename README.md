@@ -133,7 +133,7 @@ Help make Origin Lens better:
 
 - 🐛 [Report a Bug](https://github.com/aloth/origin-lens/issues/new?template=bug-report.md)
 - 💡 [Request a Feature](https://github.com/aloth/origin-lens/issues/new?template=feature_request.md)
-- 📧 [Contact Support](mailto:support+originlens@alexloth.com)
+- 📧 [Contact Support](mailto:support@alexloth.com)
 
 ---
 

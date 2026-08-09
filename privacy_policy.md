@@ -106,7 +106,7 @@ We may update this Privacy Policy from time to time. The updated policy will be 
 If you have any questions or concerns regarding this Privacy Policy, please contact:
 
 - **Alexander Loth**
-  - By email: [support+originlens@alexloth.com](mailto:support+originlens@alexloth.com)
+  - By email: [support@alexloth.com](mailto:support@alexloth.com)
   - By visiting the GitHub page: [https://github.com/aloth/origin-lens](https://github.com/aloth/origin-lens)
 
 By using Origin Lens, you acknowledge that you have read and understood this Privacy Policy.
