@@ -17,7 +17,32 @@ authors:
     given-names: Marc-Oliver
     orcid: "https://orcid.org/0000-0001-5241-3809"
 repository-code: "https://github.com/aloth/origin-lens"
+url: "https://github.com/aloth/origin-lens"
 license: GPL-3.0
+references:
+  - type: article
+    title: >
+      Origin Lens: A Privacy-First Mobile Framework for Cryptographic
+      Image Provenance and AI Detection
+    authors:
+      - family-names: Loth
+        given-names: Alexander
+      - family-names: Rosario
+        given-names: Dominique Conceicao
+      - family-names: Ebinger
+        given-names: Peter
+      - family-names: Kappes
+        given-names: Martin
+      - family-names: Pahl
+        given-names: Marc-Oliver
+    year: 2026
+    url: "https://arxiv.org/abs/2602.03423"
+    identifiers:
+      - type: other
+        value: "arXiv:2602.03423"
+    notes: >
+      Accepted at the FIIR workshop, The Web Conference 2026; the workshop
+      was subsequently cancelled
 preferred-citation:
   type: conference-paper
   title: "Origin Lens: Reclaiming Trust on the AI-Mediated Web Through On-Device Image Provenance Verification"

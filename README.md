@@ -153,7 +153,7 @@ If you use Origin Lens or its underlying research in your work, please cite our 
 ```bibtex
 @inproceedings{loth2026originlenswebsci,
   author    = {Loth, Alexander and Rosario, Dominique Conceicao and Ebinger, Peter and Kappes, Martin and Pahl, Marc-Oliver},
-  title     = {Origin Lens: Reclaiming Trust on the AI-Mediated Web Through On-Device Image Provenance Verification},
+  title     = {Origin Lens: Reclaiming Trust on the {AI}-Mediated Web Through On-Device Image Provenance Verification},
   booktitle = {18th ACM Web Science Conference (WebSci Companion '26)},
   year      = {2026},
   month     = may,
@@ -162,6 +162,16 @@ If you use Origin Lens or its underlying research in your work, please cite our 
   location  = {Braunschweig, Germany},
   pages     = {1--5},
   doi       = {10.1145/3795513.3806658}
+}
+
+@misc{loth2026originlens,
+  author        = {Loth, Alexander and Rosario, Dominique Conceicao and Ebinger, Peter and Kappes, Martin and Pahl, Marc-Oliver},
+  title         = {Origin Lens: {A} Privacy-First Mobile Framework for Cryptographic Image Provenance and {AI} Detection},
+  year          = {2026},
+  eprint        = {2602.03423},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CR},
+  note          = {Accepted at the FIIR workshop, The Web Conference 2026; the workshop was subsequently cancelled}
 }
 ```
 
@@ -179,12 +189,13 @@ Our survey on the dual nature of generative AI in the context of fake news:
 
 ```bibtex
 @misc{loth2024blessing,
-      title={Blessing or curse? A survey on the Impact of Generative AI on Fake News}, 
-      author={Alexander Loth and Martin Kappes and Marc-Oliver Pahl},
-      year={2024},
-      eprint={2404.03021},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL}
+  author        = {Loth, Alexander and Kappes, Martin and Pahl, Marc-Oliver},
+  title         = {Blessing or Curse? {A} Survey on the Impact of Generative {AI} on Fake News},
+  year          = {2024},
+  doi           = {10.48550/arXiv.2404.03021},
+  eprint        = {2404.03021},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL}
 }
 ```
 
