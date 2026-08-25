@@ -175,9 +175,17 @@ If you use Origin Lens or its underlying research in your work, please cite our 
 }
 ```
 
-### JudgeGPT
+### Related Projects
 
-Visit our sister research project [JudgeGPT](https://github.com/aloth/JudgeGPT), which explores AI-based approaches to detecting and evaluating misinformation.
+Origin Lens is one strand of a wider research program on generated disinformation:
+
+| Project | Description |
+|:---|:---|
+| [JudgeGPT](https://github.com/aloth/JudgeGPT) | Empirical platform for evaluating AI-generated news authenticity |
+| [RogueGPT](https://github.com/aloth/RogueGPT) | Controlled stimulus generator for AI news authenticity research |
+| [CRED-1](https://github.com/aloth/cred-1) | Open multi-signal domain credibility dataset (2,673 domains) |
+| [verification-crisis](https://github.com/aloth/verification-crisis) | Expert survey on GenAI disinformation threats and countermeasures |
+| [provenance-linkage](https://github.com/aloth/provenance-linkage) | Reproducibility bundle for a benchmark audit of AI-text detection |
 
 ### Related Publication
 
