@@ -1,7 +1,13 @@
 # Origin Lens – Verify Image Authenticity with C2PA Content Credentials
 
+[![App Store](https://img.shields.io/badge/App_Store-Download-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/us/app/origin-lens/id6756628121)
+[![Platform](https://img.shields.io/badge/Platform-iOS_13+_|_iPadOS_13+-lightgrey?logo=apple)](https://apps.apple.com/us/app/origin-lens/id6756628121)
+[![Flutter](https://img.shields.io/badge/Flutter-Dart_3.10-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Rust](https://img.shields.io/badge/Rust-c2pa_0.32-000000?logo=rust&logoColor=white)](https://github.com/contentauth/c2pa-rs)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Paper](https://img.shields.io/badge/Paper-arXiv:2602.03423-B31B1B.svg)](https://arxiv.org/abs/2602.03423)
+[![Paper](https://img.shields.io/badge/Paper-doi%3A10.1145%2F3795513.3806658-b31b1b)](https://doi.org/10.1145/3795513.3806658)
+[![Preprint](https://img.shields.io/badge/Preprint-arXiv%3A2602.03423-B31B1B)](https://arxiv.org/abs/2602.03423)
+[![GitHub stars](https://img.shields.io/github/stars/aloth/origin-lens?style=social)](https://github.com/aloth/origin-lens/stargazers)
 [![Mastodon](https://img.shields.io/badge/Mastodon-@xlth-6364FF?logo=mastodon&logoColor=white)](https://mastodon.social/@xlth)
 
 <p align="center">
@@ -19,6 +25,21 @@ Origin Lens analyzes images for C2PA (Coalition for Content Provenance and Authe
 Get Origin Lens on your iPhone or iPad to start verifying image authenticity today:
 
 [![Download on the App Store](https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg)](https://apps.apple.com/us/app/origin-lens/id6756628121?platform=iphone)
+
+---
+
+## Screenshots
+
+| Pick an image | Read the verdict | Check the context |
+|:---:|:---:|:---:|
+| <img src="screenshots/origin-lens-analyze-image-home.png" alt="Origin Lens home screen: verify image authenticity from gallery, Files, or a URL" width="240"> | <img src="screenshots/origin-lens-analysis-results-exif.png" alt="Analysis result showing no C2PA credentials found, with EXIF camera metadata" width="240"> | <img src="screenshots/origin-lens-context-warning-sources.png" alt="Context warning listing 206 sources where the image has appeared online" width="240"> |
+| Analyze from the photo library, the Files app, or a pasted URL. | Verification state and EXIF metadata, here an image with no C2PA manifest and a Nikon camera signature. | Optional reverse image search: where else the image appears, and when it was first seen. |
+
+Origin Lens runs on iPad with the same verification path:
+
+| | |
+|:---:|:---:|
+| <img src="screenshots/origin-lens-ipad-analyze-image-home.png" alt="Origin Lens home screen on iPad" width="320"> | <img src="screenshots/origin-lens-ipad-analysis-results-exif.png" alt="Analysis result on iPad with EXIF metadata and reverse image search" width="320"> |
 
 ---
 
