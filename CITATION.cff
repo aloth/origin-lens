@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "Origin Lens"
+title: "Origin Lens: On-Device Image Provenance Verification for iOS and iPadOS"
 message: "If you use Origin Lens or its underlying research, please cite the paper below."
 type: software
 authors:
