@@ -38,7 +38,7 @@ class C2paService {
     if (_isInitialized) return;
 
     _isInitialized = true;
-    debugPrint('C2PA Service initialized (SDK: ${getSdkVersion()})');
+    debugPrint('C2PA Service initialized (SDK: ${await getSdkVersion()})');
   }
 
   /// Analyze a file at the given path for C2PA metadata
@@ -138,9 +138,9 @@ class C2paService {
   }
 
   /// Get the C2PA SDK version
-  String getSdkVersion() {
+  Future<String> getSdkVersion() async {
     try {
-      return rust.c2PaSdkVersion();
+      return await rust.c2PaSdkVersion();
     } catch (e) {
       return 'Unknown';
     }

@@ -84,7 +84,7 @@ abstract class RustLibApi extends BaseApi {
     required String filePath,
   });
 
-  String crateApiC2PaReaderC2PaSdkVersion();
+  Future<String> crateApiC2PaReaderC2PaSdkVersion();
 
   bool crateApiC2PaReaderIsC2PaAvailable();
 }
@@ -156,12 +156,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  String crateApiC2PaReaderC2PaSdkVersion() {
-    return handler.executeSync(
-      SyncTask(
-        callFfi: () {
+  Future<String> crateApiC2PaReaderC2PaSdkVersion() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 3,
+            port: port_,
+          );
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -209,13 +214,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AiInfo dco_decode_ai_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return AiInfo(
       isAiGenerated: dco_decode_bool(arr[0]),
       generatorName: dco_decode_opt_String(arr[1]),
       modelName: dco_decode_opt_String(arr[2]),
       detectionSource: dco_decode_opt_String(arr[3]),
+      watermarkDeclared: dco_decode_bool(arr[4]),
     );
   }
 
@@ -403,11 +409,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_generatorName = sse_decode_opt_String(deserializer);
     var var_modelName = sse_decode_opt_String(deserializer);
     var var_detectionSource = sse_decode_opt_String(deserializer);
+    var var_watermarkDeclared = sse_decode_bool(deserializer);
     return AiInfo(
       isAiGenerated: var_isAiGenerated,
       generatorName: var_generatorName,
       modelName: var_modelName,
       detectionSource: var_detectionSource,
+      watermarkDeclared: var_watermarkDeclared,
     );
   }
 
@@ -657,6 +665,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.generatorName, serializer);
     sse_encode_opt_String(self.modelName, serializer);
     sse_encode_opt_String(self.detectionSource, serializer);
+    sse_encode_bool(self.watermarkDeclared, serializer);
   }
 
   @protected

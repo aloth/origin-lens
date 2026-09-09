@@ -194,6 +194,11 @@ pub struct AiInfo {
     pub generator_name: Option<String>,
     pub model_name: Option<String>,
     pub detection_source: Option<String>, // "c2pa", "exif", or "both"
+    /// Set when the manifest itself attests that an invisible watermark was
+    /// inserted, via a `c2pa.watermarked` action or a `c2pa.soft-binding`
+    /// assertion. This is a signed claim carried by the manifest, not a pixel
+    /// decode: Origin Lens reads the attestation, it does not read a watermark.
+    pub watermark_declared: bool,
 }
 
 /// EXIF metadata result
@@ -249,6 +254,7 @@ impl C2paAnalysisResult {
                 generator_name: exif.ai_generator.clone(),
                 model_name: None,
                 detection_source: Some("exif".to_string()),
+                watermark_declared: false,
             })
         } else {
             None
@@ -533,6 +539,7 @@ pub fn analyze_c2pa_from_path(file_path: String) -> C2paAnalysisResult {
                             generator_name: exif_info.ai_generator.clone(),
                             model_name: None,
                             detection_source: Some("exif".to_string()),
+                            watermark_declared: false,
                         });
                     }
                 }
@@ -574,6 +581,7 @@ pub fn analyze_c2pa_from_path(file_path: String) -> C2paAnalysisResult {
                         generator_name: e.ai_generator.clone(),
                         model_name: None,
                         detection_source: Some("exif".to_string()),
+                        watermark_declared: false,
                     }),
                     exif_info,
                     claim_generator: None,
@@ -619,6 +627,7 @@ pub fn analyze_c2pa_from_bytes(data: Vec<u8>, mime_type: String) -> C2paAnalysis
                             generator_name: exif_info.ai_generator.clone(),
                             model_name: None,
                             detection_source: Some("exif".to_string()),
+                            watermark_declared: false,
                         });
                     }
                 }
@@ -657,6 +666,7 @@ pub fn analyze_c2pa_from_bytes(data: Vec<u8>, mime_type: String) -> C2paAnalysis
                                                     generator_name: exif_info.ai_generator.clone(),
                                                     model_name: None,
                                                     detection_source: Some("exif".to_string()),
+                                                    watermark_declared: false,
                                                 });
                                             }
                                         }
@@ -722,6 +732,7 @@ pub fn analyze_c2pa_from_bytes(data: Vec<u8>, mime_type: String) -> C2paAnalysis
                         generator_name: e.ai_generator.clone(),
                         model_name: None,
                         detection_source: Some("exif".to_string()),
+                        watermark_declared: false,
                     }),
                     exif_info,
                     claim_generator: None,
@@ -832,7 +843,27 @@ fn parse_manifest_reader(reader: &Reader) -> C2paAnalysisResult {
     let raw_json = serde_json::to_string_pretty(&reader.json()).ok();
 
     // Check for AI generation indicators (now with raw JSON)
-    let ai_info = detect_ai_generation(&actions, claim_gen, raw_json.as_deref());
+    let mut ai_info = detect_ai_generation(&actions, claim_gen, raw_json.as_deref());
+
+    // A manifest can attest a watermark independently of whether the generator
+    // was recognised, so this is applied after the generator heuristics rather
+    // than inside them. When only the watermark declaration is present, it is
+    // itself evidence of AI generation: the specification defines the action as
+    // inserting a watermark for soft binding.
+    if detect_watermark_declaration(&actions, raw_json.as_deref()) {
+        match ai_info.as_mut() {
+            Some(info) => info.watermark_declared = true,
+            None => {
+                ai_info = Some(AiInfo {
+                    is_ai_generated: true,
+                    generator_name: None,
+                    model_name: None,
+                    detection_source: Some("c2pa".to_string()),
+                    watermark_declared: true,
+                })
+            }
+        }
+    }
 
     // Determine verification status
     let status = classify_validation_status(reader.validation_status());
@@ -849,6 +880,34 @@ fn parse_manifest_reader(reader: &Reader) -> C2paAnalysisResult {
         instance_id: Some(manifest.instance_id().to_string()),
         raw_manifest_json: raw_json,
     }
+}
+
+/// Does the manifest itself attest that an invisible watermark was inserted?
+///
+/// Two signals, both defined by the C2PA specification:
+///
+/// * the `c2pa.watermarked` action, "an invisible watermark was inserted into
+///   the digital content for the purpose of creating a soft binding";
+/// * the `c2pa.soft-binding` assertion, which the specification requires
+///   alongside that action to describe the inserted watermark.
+///
+/// ⚠️ This reads a signed claim, it does not read a watermark. Origin Lens has
+/// no watermark decoder: it reports that a manifest says a watermark exists,
+/// which is a different and weaker statement than detecting one. A stripped or
+/// re-encoded file can lose the manifest while keeping the watermark, and an
+/// unsigned manifest can assert a watermark that was never inserted.
+fn detect_watermark_declaration(actions: &[ContentAction], raw_json: Option<&str>) -> bool {
+    if actions
+        .iter()
+        .any(|a| a.action.eq_ignore_ascii_case("c2pa.watermarked"))
+    {
+        return true;
+    }
+
+    // The soft-binding assertion carries its label in the manifest JSON.
+    raw_json
+        .map(|json| json.contains("c2pa.soft-binding"))
+        .unwrap_or(false)
 }
 
 fn detect_ai_generation(actions: &[ContentAction], claim_generator: &str, raw_json: Option<&str>) -> Option<AiInfo> {
@@ -873,6 +932,7 @@ fn detect_ai_generation(actions: &[ContentAction], claim_generator: &str, raw_js
                             generator_name: Some(agent.clone()),
                             model_name: extract_model_name(&agent_lower),
                             detection_source: Some("c2pa".to_string()),
+                            watermark_declared: false,
                         });
                     }
                 }
@@ -888,6 +948,7 @@ fn detect_ai_generation(actions: &[ContentAction], claim_generator: &str, raw_js
                             generator_name: Some(desc.clone()),
                             model_name: extract_model_name(&desc_lower),
                             detection_source: Some("c2pa".to_string()),
+                            watermark_declared: false,
                         });
                     }
                 }
@@ -904,6 +965,7 @@ fn detect_ai_generation(actions: &[ContentAction], claim_generator: &str, raw_js
                 generator_name: Some(claim_generator.to_string()),
                 model_name: extract_model_name(&gen_lower),
                 detection_source: Some("c2pa".to_string()),
+                watermark_declared: false,
             });
         }
     }
@@ -967,6 +1029,7 @@ fn check_json_for_ai_indicators(json: &Value) -> Option<AiInfo> {
                 generator_name: generator.or_else(|| Some("AI Generated (from digitalSourceType)".to_string())),
                 model_name: None,
                 detection_source: Some("c2pa".to_string()),
+                watermark_declared: false,
             });
         }
     }
@@ -979,6 +1042,7 @@ fn check_json_for_ai_indicators(json: &Value) -> Option<AiInfo> {
             generator_name: generator.or_else(|| Some("AI Generated".to_string())),
             model_name: None,
             detection_source: Some("c2pa".to_string()),
+            watermark_declared: false,
         });
     }
     
@@ -990,6 +1054,7 @@ fn check_json_for_ai_indicators(json: &Value) -> Option<AiInfo> {
             generator_name: Some("AI/ML Generated Content".to_string()),
             model_name: None,
             detection_source: Some("c2pa".to_string()),
+            watermark_declared: false,
         });
     }
     
@@ -1000,6 +1065,7 @@ fn check_json_for_ai_indicators(json: &Value) -> Option<AiInfo> {
             generator_name: Some("Synthetic/AI Generated".to_string()),
             model_name: None,
             detection_source: Some("c2pa".to_string()),
+            watermark_declared: false,
         });
     }
     

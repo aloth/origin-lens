@@ -8,7 +8,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'c2pa_reader.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `cbor_to_json`, `check_json_for_ai_indicators`, `detect_ai_generation`, `error`, `extract_cert_field`, `extract_generator_from_json`, `extract_model_name`, `no_manifest_with_exif`, `no_manifest`, `parse_exif_from_bytes`, `parse_exif_from_file`, `parse_manifest_reader`, `software_agent_to_string`
+// These functions are ignored because they are not marked as `pub`: `cbor_to_json`, `check_json_for_ai_indicators`, `classify_validation_status`, `detect_ai_generation`, `error`, `extract_cert_field`, `extract_generator_from_json`, `extract_model_name`, `no_manifest_with_exif`, `no_manifest`, `parse_exif_from_bytes`, `parse_exif_from_file`, `parse_manifest_reader`, `software_agent_to_string`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Analyzes a file at the given path for C2PA metadata
@@ -26,8 +26,7 @@ C2paAnalysisResult analyzeC2PaFromBytes({
   mimeType: mimeType,
 );
 
-/// Returns the C2PA SDK version
-String c2PaSdkVersion() =>
+Future<String> c2PaSdkVersion() =>
     RustLib.instance.api.crateApiC2PaReaderC2PaSdkVersion();
 
 /// Check if the native library is properly loaded
@@ -41,11 +40,18 @@ class AiInfo {
   final String? modelName;
   final String? detectionSource;
 
+  /// Set when the manifest itself attests that an invisible watermark was
+  /// inserted, via a `c2pa.watermarked` action or a `c2pa.soft-binding`
+  /// assertion. This is a signed claim carried by the manifest, not a pixel
+  /// decode: Origin Lens reads the attestation, it does not read a watermark.
+  final bool watermarkDeclared;
+
   const AiInfo({
     required this.isAiGenerated,
     this.generatorName,
     this.modelName,
     this.detectionSource,
+    required this.watermarkDeclared,
   });
 
   @override
@@ -53,7 +59,8 @@ class AiInfo {
       isAiGenerated.hashCode ^
       generatorName.hashCode ^
       modelName.hashCode ^
-      detectionSource.hashCode;
+      detectionSource.hashCode ^
+      watermarkDeclared.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -63,7 +70,8 @@ class AiInfo {
           isAiGenerated == other.isAiGenerated &&
           generatorName == other.generatorName &&
           modelName == other.modelName &&
-          detectionSource == other.detectionSource;
+          detectionSource == other.detectionSource &&
+          watermarkDeclared == other.watermarkDeclared;
 }
 
 /// The full C2PA analysis result
