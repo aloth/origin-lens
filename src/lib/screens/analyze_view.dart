@@ -42,6 +42,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
 
   static const String _imgbbKeyPrefKey = 'user_imgbb_key';
   static const String _serpApiKeyPrefKey = 'user_serpapi_key';
+  static const String _remoteConsentPrefKey = 'remote_assessment_consent';
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -649,8 +650,9 @@ class _AnalyzeViewState extends State<AnalyzeView>
         _showMetadataStrippingWarning(url);
       }
 
-      // Fallback: If no C2PA manifest, try SynthID
-      if (!_hasManifest(result.status)) {
+      // Fallback: offer the remote assessment. Offered, not performed: this is
+      // the only path on which the image leaves the device.
+      if (!_hasManifest(result.status) && await _confirmRemoteAssessment()) {
         _analyzeSynthIdFromBytes(bytes);
       }
     } catch (e, stackTrace) {
@@ -766,8 +768,9 @@ class _AnalyzeViewState extends State<AnalyzeView>
         _isLoading = false;
       });
 
-      // Fallback: If no C2PA manifest, try SynthID
-      if (!_hasManifest(result.status)) {
+      // Fallback: offer the remote assessment. Offered, not performed: this is
+      // the only path on which the image leaves the device.
+      if (!_hasManifest(result.status) && await _confirmRemoteAssessment()) {
         _analyzeSynthIdFromFile(_selectedImage!);
       }
     } catch (e, stackTrace) {
@@ -776,6 +779,54 @@ class _AnalyzeViewState extends State<AnalyzeView>
       _setLoading(false, '');
       _showError('Analysis failed: $e');
     }
+  }
+
+  /// Ask before the image leaves the device.
+  ///
+  /// Everything else in the analysis runs locally. The AI assessment posts the
+  /// full image to a third-party API, so it is offered rather than performed as
+  /// a silent fallback. No dialog is shown when no API key is configured, since
+  /// nothing would be sent in that case.
+  Future<bool> _confirmRemoteAssessment() async {
+    if (!SynthIdService.instance.isConfigured) return false;
+
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_remoteConsentPrefKey) == true) return true;
+
+    if (!mounted) return false;
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Send this image for AI assessment?'),
+        content: const Text(
+          'No Content Credentials were found in this image. Origin Lens can ask '
+          'a general-purpose AI model whether it looks AI-generated.\n\n'
+          'This sends the full image to Google\'s Gemini API. Every other check '
+          'in this analysis ran on your device. The model returns an opinion, '
+          'not a watermark reading.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, 'no'),
+            child: const Text('Not now'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, 'once'),
+            child: const Text('Send once'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, 'always'),
+            child: const Text('Always send'),
+          ),
+        ],
+      ),
+    );
+
+    if (choice == 'always') {
+      await prefs.setBool(_remoteConsentPrefKey, true);
+      return true;
+    }
+    return choice == 'once';
   }
 
   Future<void> _analyzeSynthIdFromFile(File file) async {

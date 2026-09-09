@@ -835,20 +835,7 @@ fn parse_manifest_reader(reader: &Reader) -> C2paAnalysisResult {
     let ai_info = detect_ai_generation(&actions, claim_gen, raw_json.as_deref());
 
     // Determine verification status
-    let status = match reader.validation_status() {
-        None => VerificationStatus::Verified,
-        Some(statuses) => {
-            if statuses.iter().any(|s| s.code().contains("signature")) {
-                VerificationStatus::SignatureInvalid
-            } else if statuses.iter().any(|s| s.code().contains("expired")) {
-                VerificationStatus::CertificateExpired
-            } else if statuses.iter().any(|s| s.code().contains("trust")) {
-                VerificationStatus::CertificateUntrusted
-            } else {
-                VerificationStatus::Verified
-            }
-        }
-    };
+    let status = classify_validation_status(reader.validation_status());
 
     C2paAnalysisResult {
         status,
@@ -1056,6 +1043,57 @@ fn extract_generator_from_json(json: &Value) -> Option<String> {
 
 /// Returns the C2PA SDK version
 #[frb(sync)]
+/// Map a c2pa validation-status list onto the app's verification status.
+///
+/// The library's `status_for_store` filters out every success code before it
+/// builds this list, so a non-empty list always means at least one check
+/// failed. Any fall-through to `Verified` is therefore wrong by construction,
+/// which is what the earlier substring test did: it looked for lowercase
+/// "signature", "expired" and "trust" and treated everything else as verified.
+/// Codes such as `claimSignature.mismatch` (capital S) and
+/// `assertion.dataHash.mismatch` matched none of those tests, so an image whose
+/// content no longer matches its signed hash was displayed as authentic.
+///
+/// Codes are compared exactly, against the constants in c2pa-rs 0.32.7. A code
+/// that matches no category is not silently accepted: it is reported verbatim,
+/// so an unrecognised failure surfaces instead of disappearing.
+fn classify_validation_status(statuses: Option<&[c2pa::validation_status::ValidationStatus]>) -> VerificationStatus {
+    let statuses = match statuses {
+        None => return VerificationStatus::Verified,
+        Some(s) if s.is_empty() => return VerificationStatus::Verified,
+        Some(s) => s,
+    };
+
+    const SIGNATURE_FAILURES: [&str; 2] = ["claimSignature.mismatch", "claimSignature.missing"];
+    const EXPIRY_FAILURES: [&str; 2] = ["signingCredential.expired", "timeStamp.outsideValidity"];
+    const TRUST_FAILURES: [&str; 5] = [
+        "signingCredential.untrusted",
+        "signingCredential.invalid",
+        "signingCredential.revoked",
+        "timeStamp.untrusted",
+        "timeStamp.mismatch",
+    ];
+
+    let has = |set: &[&str]| statuses.iter().any(|s| set.contains(&s.code()));
+
+    if has(&SIGNATURE_FAILURES) {
+        VerificationStatus::SignatureInvalid
+    } else if has(&EXPIRY_FAILURES) {
+        VerificationStatus::CertificateExpired
+    } else if has(&TRUST_FAILURES) {
+        VerificationStatus::CertificateUntrusted
+    } else {
+        // Integrity and structural failures, including asset-binding mismatches.
+        // The prefix matters: the Dart layer treats an Error as "no manifest" and
+        // routes such images to the remote assessment. A manifest that fails
+        // validation is still a manifest, and must not be uploaded on that basis.
+        let codes: Vec<&str> = statuses.iter().map(|s| s.code()).collect();
+        VerificationStatus::Error {
+            message: format!("C2PA manifest validation failed: {}", codes.join(", ")),
+        }
+    }
+}
+
 pub fn c2pa_sdk_version() -> String {
     "c2pa-rs 0.32".to_string()
 }
