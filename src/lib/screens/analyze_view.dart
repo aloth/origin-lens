@@ -43,6 +43,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
   static const String _imgbbKeyPrefKey = 'user_imgbb_key';
   static const String _serpApiKeyPrefKey = 'user_serpapi_key';
   static const String _remoteConsentPrefKey = 'remote_assessment_consent';
+  static const String _reverseSearchConsentPrefKey = 'reverse_search_consent';
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -787,47 +788,94 @@ class _AnalyzeViewState extends State<AnalyzeView>
   /// full image to a third-party API, so it is offered rather than performed as
   /// a silent fallback. No dialog is shown when no API key is configured, since
   /// nothing would be sent in that case.
-  Future<bool> _confirmRemoteAssessment() async {
-    if (!SynthIdService.instance.isConfigured) return false;
-
+  /// Ask before an image leaves the device, with a "do not ask again" option.
+  ///
+  /// Every other check in this app runs locally. The paths that upload are
+  /// offered rather than performed silently, and the choice to stop asking is
+  /// the user's, stored per path under [prefKey].
+  Future<bool> _confirmUpload({
+    required String prefKey,
+    required String title,
+    required String body,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool(_remoteConsentPrefKey) == true) return true;
+    if (prefs.getBool(prefKey) == true) return true;
 
     if (!mounted) return false;
-    final choice = await showDialog<String>(
+    bool dontAskAgain = false;
+
+    final approved = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Send this image for AI assessment?'),
-        content: const Text(
-          'No Content Credentials were found in this image. Origin Lens can ask '
-          'a general-purpose AI model whether it looks AI-generated.\n\n'
-          'This sends the full image to Google\'s Gemini API. Every other check '
-          'in this analysis ran on your device. The model returns an opinion, '
-          'not a watermark reading.',
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (builderContext, setDialogState) => AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(body),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                value: dontAskAgain,
+                onChanged: (value) =>
+                    setDialogState(() => dontAskAgain = value ?? false),
+                title: const Text("Don't ask again"),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                dense: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Send'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, 'no'),
-            child: const Text('Not now'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, 'once'),
-            child: const Text('Send once'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, 'always'),
-            child: const Text('Always send'),
-          ),
-        ],
       ),
     );
 
-    if (choice == 'always') {
-      await prefs.setBool(_remoteConsentPrefKey, true);
-      return true;
+    // The preference is only stored on approval: ticking the box and then
+    // cancelling must not silently authorise future uploads.
+    if (approved == true && dontAskAgain) {
+      await prefs.setBool(prefKey, true);
     }
-    return choice == 'once';
+    return approved == true;
   }
+
+  Future<bool> _confirmRemoteAssessment() async {
+    if (!SynthIdService.instance.isConfigured) return false;
+    return _confirmUpload(
+      prefKey: _remoteConsentPrefKey,
+      title: 'Send this image for AI assessment?',
+      body:
+          'No Content Credentials were found in this image. Origin Lens can ask '
+          "Google's Gemini API whether it carries a SynthID watermark or "
+          'otherwise looks AI-generated.\n\n'
+          'This sends the full image to that API. Every other check in this '
+          'analysis ran on your device.',
+    );
+  }
+
+  Future<bool> _confirmReverseSearch() async {
+    return _confirmUpload(
+      prefKey: _reverseSearchConsentPrefKey,
+      title: 'Upload this image to search engines?',
+      body:
+          'Reverse image search looks for earlier appearances of this image. '
+          'Doing so uploads it to third-party services: Google, Bing, Yandex '
+          'and TinEye, and to an image host first when no API key is '
+          'configured.\n\n'
+          'Results are contextual signals that need your interpretation, not a '
+          'verdict on authenticity.',
+    );
+  }
+
 
   Future<void> _analyzeSynthIdFromFile(File file) async {
     setState(() {
@@ -876,6 +924,9 @@ class _AnalyzeViewState extends State<AnalyzeView>
   }
 
   Future<void> _searchContext() async {
+    // Reverse search uploads the image to third-party engines, so it asks first.
+    if (!await _confirmReverseSearch()) return;
+
     final searchService = ReverseImageSearchService.instance;
 
     debugPrint(
