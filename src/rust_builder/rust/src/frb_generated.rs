@@ -241,11 +241,17 @@ impl SseDecode for crate::api::c2pa_reader::ContentAction {
         let mut var_softwareAgent = <Option<String>>::sse_decode(deserializer);
         let mut var_when = <Option<String>>::sse_decode(deserializer);
         let mut var_description = <Option<String>>::sse_decode(deserializer);
+        let mut var_parameters = <Option<String>>::sse_decode(deserializer);
+        let mut var_reason = <Option<String>>::sse_decode(deserializer);
+        let mut var_sourceType = <Option<String>>::sse_decode(deserializer);
         return crate::api::c2pa_reader::ContentAction {
             action: var_action,
             software_agent: var_softwareAgent,
             when: var_when,
             description: var_description,
+            parameters: var_parameters,
+            reason: var_reason,
+            source_type: var_sourceType,
         };
     }
 }
@@ -515,6 +521,9 @@ impl flutter_rust_bridge::IntoDart for crate::api::c2pa_reader::ContentAction {
             self.software_agent.into_into_dart().into_dart(),
             self.when.into_into_dart().into_dart(),
             self.description.into_into_dart().into_dart(),
+            self.parameters.into_into_dart().into_dart(),
+            self.reason.into_into_dart().into_dart(),
+            self.source_type.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -665,6 +674,9 @@ impl SseEncode for crate::api::c2pa_reader::ContentAction {
         <Option<String>>::sse_encode(self.software_agent, serializer);
         <Option<String>>::sse_encode(self.when, serializer);
         <Option<String>>::sse_encode(self.description, serializer);
+        <Option<String>>::sse_encode(self.parameters, serializer);
+        <Option<String>>::sse_encode(self.reason, serializer);
+        <Option<String>>::sse_encode(self.source_type, serializer);
     }
 }
 

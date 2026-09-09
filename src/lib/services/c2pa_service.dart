@@ -89,34 +89,43 @@ class C2paService {
     String mimeType,
   ) async {
     try {
-      debugPrint('C2PA Analysis (bytes): Size=${data.length}bytes, MIME=$mimeType');
-      
+      debugPrint(
+        'C2PA Analysis (bytes): Size=${data.length}bytes, MIME=$mimeType',
+      );
+
       final result = rust.analyzeC2PaFromBytes(data: data, mimeType: mimeType);
-      
+
       debugPrint('C2PA Result (bytes): status=${result.status}');
-      debugPrint('  hasAiInfo=${result.aiInfo != null}, isAI=${result.aiInfo?.isAiGenerated}');
+      debugPrint(
+        '  hasAiInfo=${result.aiInfo != null}, isAI=${result.aiInfo?.isAiGenerated}',
+      );
       debugPrint('  claimGen=${result.claimGenerator}');
       debugPrint('  actionsCount=${result.actions.length}');
       debugPrint('  hasSigner=${result.signer != null}');
       debugPrint('  hasExif=${result.exifInfo != null}');
-      
+
       if (result.rawManifestJson != null) {
-        debugPrint('C2PA: Manifest found (${result.rawManifestJson!.length} chars)');
-        // Log first 500 chars of manifest for debugging
-        final preview = result.rawManifestJson!.length > 500 
-            ? result.rawManifestJson!.substring(0, 500) 
+        debugPrint(
+          'C2PA: Manifest found (${result.rawManifestJson!.length} chars)',
+        );
+        final preview = result.rawManifestJson!.length > 500
+            ? result.rawManifestJson!.substring(0, 500)
             : result.rawManifestJson!;
         debugPrint('C2PA Manifest preview: $preview');
       } else {
         debugPrint('C2PA: No manifest in bytes');
       }
-      
+
       if (result.exifInfo != null) {
         final exif = result.exifInfo!;
-        debugPrint('EXIF: software=${exif.software}, make=${exif.make}, model=${exif.model}');
-        debugPrint('EXIF: aiDetected=${exif.aiDetected}, aiGenerator=${exif.aiGenerator}');
+        debugPrint(
+          'EXIF: software=${exif.software}, make=${exif.make}, model=${exif.model}',
+        );
+        debugPrint(
+          'EXIF: aiDetected=${exif.aiDetected}, aiGenerator=${exif.aiGenerator}',
+        );
       }
-      
+
       return result;
     } catch (e, stackTrace) {
       debugPrint('C2PA Error (bytes): $e');

@@ -120,3 +120,8 @@ app.*.symbols
 
 #env
 .env
+
+# Dependency locks for the shipped application are tracked deliberately: they
+# record the exact resolved versions the App Store build was produced from.
+!src/pubspec.lock
+!src/rust_builder/rust/Cargo.lock

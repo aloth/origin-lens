@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common_widgets.dart';
 
@@ -13,6 +14,7 @@ class FaqView extends StatefulWidget {
 class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  String _version = '';
   int _expandedIndex = -1;
 
   final List<_FaqItem> _faqItems = [
@@ -100,6 +102,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _loadPackageInfo();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -109,6 +112,15 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
       curve: Curves.easeOut,
     );
     _animationController.forward();
+  }
+
+  Future<void> _loadPackageInfo() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _version = 'Version ${packageInfo.version}';
+      });
+    }
   }
 
   @override
@@ -444,7 +456,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
                       ),
                     ),
                     Text(
-                      'Version 1.0.0',
+                      _version.isNotEmpty ? _version : 'Version 1.2.0',
                       style: AppTypography.bodySmall.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

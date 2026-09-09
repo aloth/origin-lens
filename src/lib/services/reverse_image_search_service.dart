@@ -825,7 +825,6 @@ class ReverseImageSearchService {
 
     debugPrint('ReverseImageSearch: Parsing Bing HTML (${html.length} chars)');
 
-    // Log preview for debugging
     if (html.length > 500) {
       debugPrint('Bing HTML preview: ${html.substring(0, 500)}');
     }
@@ -1024,7 +1023,6 @@ class ReverseImageSearchService {
           debugPrint(
             'ReverseImageSearch: No redirect, parsing response body directly',
           );
-          // Log first 1000 chars of response for debugging
           final preview = response.body.length > 1000
               ? response.body.substring(0, 1000)
               : response.body;
@@ -1071,7 +1069,6 @@ class ReverseImageSearchService {
       debugPrint('  Body length: ${response.body.length} chars');
 
       if (response.statusCode == 200) {
-        // Log a preview of the HTML for debugging
         final preview = response.body.length > 2000
             ? response.body.substring(0, 2000)
             : response.body;

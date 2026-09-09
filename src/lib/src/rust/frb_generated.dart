@@ -267,13 +267,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ContentAction dco_decode_content_action(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return ContentAction(
       action: dco_decode_String(arr[0]),
       softwareAgent: dco_decode_opt_String(arr[1]),
       when: dco_decode_opt_String(arr[2]),
       description: dco_decode_opt_String(arr[3]),
+      parameters: dco_decode_opt_String(arr[4]),
+      reason: dco_decode_opt_String(arr[5]),
+      sourceType: dco_decode_opt_String(arr[6]),
     );
   }
 
@@ -468,11 +471,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_softwareAgent = sse_decode_opt_String(deserializer);
     var var_when = sse_decode_opt_String(deserializer);
     var var_description = sse_decode_opt_String(deserializer);
+    var var_parameters = sse_decode_opt_String(deserializer);
+    var var_reason = sse_decode_opt_String(deserializer);
+    var var_sourceType = sse_decode_opt_String(deserializer);
     return ContentAction(
       action: var_action,
       softwareAgent: var_softwareAgent,
       when: var_when,
       description: var_description,
+      parameters: var_parameters,
+      reason: var_reason,
+      sourceType: var_sourceType,
     );
   }
 
@@ -705,6 +714,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.softwareAgent, serializer);
     sse_encode_opt_String(self.when, serializer);
     sse_encode_opt_String(self.description, serializer);
+    sse_encode_opt_String(self.parameters, serializer);
+    sse_encode_opt_String(self.reason, serializer);
+    sse_encode_opt_String(self.sourceType, serializer);
   }
 
   @protected

@@ -8,7 +8,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'c2pa_reader.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `check_json_for_ai_indicators`, `detect_ai_generation`, `error`, `extract_cert_field`, `extract_generator_from_json`, `extract_model_name`, `no_manifest_with_exif`, `no_manifest`, `parse_exif_from_bytes`, `parse_exif_from_file`, `parse_manifest_reader`, `software_agent_to_string`
+// These functions are ignored because they are not marked as `pub`: `cbor_to_json`, `check_json_for_ai_indicators`, `detect_ai_generation`, `error`, `extract_cert_field`, `extract_generator_from_json`, `extract_model_name`, `no_manifest_with_exif`, `no_manifest`, `parse_exif_from_bytes`, `parse_exif_from_file`, `parse_manifest_reader`, `software_agent_to_string`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Analyzes a file at the given path for C2PA metadata
@@ -129,11 +129,23 @@ class ContentAction {
   final String? when;
   final String? description;
 
+  /// Parameters specific to this action (e.g., for color_adjustments: Exposure2012, Blacks2012, etc.)
+  final String? parameters;
+
+  /// Reason for this action (C2PA v2)
+  final String? reason;
+
+  /// Digital source type (e.g., trainedAlgorithmicMedia for AI)
+  final String? sourceType;
+
   const ContentAction({
     required this.action,
     this.softwareAgent,
     this.when,
     this.description,
+    this.parameters,
+    this.reason,
+    this.sourceType,
   });
 
   @override
@@ -141,7 +153,10 @@ class ContentAction {
       action.hashCode ^
       softwareAgent.hashCode ^
       when.hashCode ^
-      description.hashCode;
+      description.hashCode ^
+      parameters.hashCode ^
+      reason.hashCode ^
+      sourceType.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -151,7 +166,10 @@ class ContentAction {
           action == other.action &&
           softwareAgent == other.softwareAgent &&
           when == other.when &&
-          description == other.description;
+          description == other.description &&
+          parameters == other.parameters &&
+          reason == other.reason &&
+          sourceType == other.sourceType;
 }
 
 /// EXIF metadata result

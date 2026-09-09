@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -37,8 +38,10 @@ class _AnalyzeViewState extends State<AnalyzeView>
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _imgbbKeyController = TextEditingController();
+  final TextEditingController _serpApiKeyController = TextEditingController();
 
   static const String _imgbbKeyPrefKey = 'user_imgbb_key';
+  static const String _serpApiKeyPrefKey = 'user_serpapi_key';
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -76,6 +79,12 @@ class _AnalyzeViewState extends State<AnalyzeView>
         ReverseImageSearchService.instance.setUserImgbbApiKey(savedImgbbKey);
         debugPrint('Loaded user imgbb key from preferences');
       }
+      final savedSerpApiKey = prefs.getString(_serpApiKeyPrefKey);
+      if (savedSerpApiKey != null && savedSerpApiKey.isNotEmpty) {
+        _serpApiKeyController.text = savedSerpApiKey;
+        ReverseImageSearchService.instance.setUserApiKey(savedSerpApiKey);
+        debugPrint('Loaded user SerpAPI key from preferences');
+      }
     } catch (e) {
       debugPrint('Error loading user API keys: $e');
     }
@@ -95,6 +104,23 @@ class _AnalyzeViewState extends State<AnalyzeView>
       }
     } catch (e) {
       debugPrint('Error saving user imgbb key: $e');
+    }
+  }
+
+  Future<void> _saveUserSerpApiKey(String? apiKey) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (apiKey != null && apiKey.isNotEmpty) {
+        await prefs.setString(_serpApiKeyPrefKey, apiKey);
+        ReverseImageSearchService.instance.setUserApiKey(apiKey);
+        debugPrint('Saved user SerpAPI key to preferences');
+      } else {
+        await prefs.remove(_serpApiKeyPrefKey);
+        ReverseImageSearchService.instance.setUserApiKey(null);
+        debugPrint('Cleared user SerpAPI key from preferences');
+      }
+    } catch (e) {
+      debugPrint('Error saving user SerpAPI key: $e');
     }
   }
 
@@ -146,15 +172,17 @@ class _AnalyzeViewState extends State<AnalyzeView>
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
-                ),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.search_rounded, color: theme.colorScheme.primary),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    size: 18,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Column(
@@ -162,15 +190,16 @@ class _AnalyzeViewState extends State<AnalyzeView>
                       children: [
                         Text(
                           'Multi-Engine Search',
-                          style: AppTypography.labelLarge.copyWith(
-                            color: theme.colorScheme.onSurface,
+                          style: AppTypography.labelMedium.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           'Context search uses Bing, Yandex, TinEye, and Google for comprehensive results - no API keys required!',
                           style: AppTypography.bodySmall.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                           ),
                         ),
                       ],
@@ -245,13 +274,81 @@ class _AnalyzeViewState extends State<AnalyzeView>
               autocorrect: false,
               enableSuggestions: false,
             ),
+            const SizedBox(height: AppSpacing.xl),
+            Text(
+              'SerpAPI Key (Optional)',
+              style: AppTypography.labelLarge.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Optional: Provides additional search results. Get a free key at serpapi.com',
+              style: AppTypography.bodySmall.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: _serpApiKeyController,
+              decoration: InputDecoration(
+                hintText: 'Enter your SerpAPI key (optional)',
+                hintStyle: AppTypography.bodyMedium.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                ),
+                prefixIcon: Icon(
+                  Icons.key_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                suffixIcon: _serpApiKeyController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.clear_rounded,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        onPressed: () {
+                          _serpApiKeyController.clear();
+                          _saveUserSerpApiKey(null);
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('SerpAPI key cleared'),
+                              backgroundColor: theme.colorScheme.secondary,
+                            ),
+                          );
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+              ),
+              style: AppTypography.bodyMedium.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+              obscureText: true,
+              autocorrect: false,
+              enableSuggestions: false,
+            ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: () {
                   final imgbbKey = _imgbbKeyController.text.trim();
+                  final serpApiKey = _serpApiKeyController.text.trim();
                   _saveUserImgbbKey(imgbbKey.isNotEmpty ? imgbbKey : null);
+                  _saveUserSerpApiKey(serpApiKey.isNotEmpty ? serpApiKey : null);
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -288,6 +385,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
   void dispose() {
     _urlController.dispose();
     _imgbbKeyController.dispose();
+    _serpApiKeyController.dispose();
     _fadeController.dispose();
     super.dispose();
   }
@@ -329,6 +427,85 @@ class _AnalyzeViewState extends State<AnalyzeView>
     }
   }
 
+  /// Checks if a URL is from a known service that strips C2PA metadata
+  bool _isMetadataStrippingService(String url) {
+    final strippingPatterns = [
+      // Social media platforms (always strip metadata)
+      'pbs.twimg.com', // Twitter/X
+      'instagram.com',
+      'cdninstagram.com',
+      'facebook.com',
+      'fbcdn.net',
+      'tiktok.com',
+      'snapchat.com',
+      // Image optimization/CDN services that may strip metadata
+      'cloudinary.com',
+      'imgix.net',
+      'images.unsplash.com',
+      'res.cloudinary.com',
+      'imagekit.io',
+      'thumbor',
+      'imageshack.com',
+      'tinypic.com',
+      'postimg.cc',
+      'ibb.co', // imgbb
+      'i.ibb.co',
+      'imgur.com',
+      'i.imgur.com',
+      // Google services
+      'googleusercontent.com',
+      'ggpht.com',
+      'lh3.google.com',
+      // Resize/transform parameters
+      '?w=', '&w=', // width parameter
+      '?h=', '&h=', // height parameter
+      '?resize=',
+      '?fit=',
+      '?quality=',
+      '?auto=format',
+      '?auto=compress',
+      '_thumb',
+      '_small',
+      '_medium',
+      '_large',
+    ];
+
+    final lowerUrl = url.toLowerCase();
+    return strippingPatterns.any((pattern) => lowerUrl.contains(pattern));
+  }
+
+  /// Attempts to get the original/raw image URL from common CDN patterns
+  String _tryGetOriginalUrl(String url) {
+    var originalUrl = url;
+
+    // Remove common resize/quality parameters
+    final paramsToRemove = [
+      RegExp(r'[?&]w=\d+'),
+      RegExp(r'[?&]h=\d+'),
+      RegExp(r'[?&]width=\d+'),
+      RegExp(r'[?&]height=\d+'),
+      RegExp(r'[?&]resize=[\w\d]+'),
+      RegExp(r'[?&]fit=[\w]+'),
+      RegExp(r'[?&]quality=\d+'),
+      RegExp(r'[?&]q=\d+'),
+      RegExp(r'[?&]auto=[\w,]+'),
+      RegExp(r'[?&]format=[\w]+'),
+      RegExp(r'[?&]fm=[\w]+'),
+    ];
+
+    for (final pattern in paramsToRemove) {
+      originalUrl = originalUrl.replaceAll(pattern, '');
+    }
+
+    // Clean up URL if we removed parameters
+    originalUrl = originalUrl.replaceAll('?&', '?').replaceAll('&&', '&');
+    if (originalUrl.endsWith('?') || originalUrl.endsWith('&')) {
+      originalUrl = originalUrl.substring(0, originalUrl.length - 1);
+    }
+
+    return originalUrl;
+  }
+
   Future<void> _analyzeFromUrl() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) {
@@ -349,24 +526,78 @@ class _AnalyzeViewState extends State<AnalyzeView>
     }
 
     Navigator.pop(context);
-    _setLoading(true, 'Downloading image...');
+
+    // Check if URL is from a known metadata-stripping service
+    final isStrippingService = _isMetadataStrippingService(url);
+    if (isStrippingService) {
+      debugPrint('⚠️ URL is from a service known to strip C2PA metadata');
+    }
+
+    // Try to get original URL without resize parameters
+    final originalUrl = _tryGetOriginalUrl(url);
+    final effectiveUri = Uri.parse(originalUrl);
+
+    _setLoading(true, 'Downloading original image...');
     _setImage(null, null, url);
 
     try {
-      final response = await http.get(uri);
+      // Use headers that request the original, unmodified image
+      // These headers tell the server we want the raw file, not an optimized version
+      final response = await http.get(
+        effectiveUri,
+        headers: {
+          // Request original format, avoid WebP conversion
+          'Accept':
+              'image/jpeg, image/png, image/heic, image/heif, image/avif, image/tiff, image/webp, */*',
+          // Disable caching to get fresh content
+          'Cache-Control': 'no-cache, no-transform',
+          // Some CDNs use this to skip optimization
+          'X-No-Transform': 'true',
+          // Pretend to be a standard browser
+          'User-Agent':
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+      );
+
       if (response.statusCode != 200) {
         throw Exception('HTTP ${response.statusCode}');
       }
 
       final bytes = response.bodyBytes;
       final contentType = response.headers['content-type'] ?? 'image/jpeg';
+
+      debugPrint('Response headers:');
+      debugPrint('  Content-Type: $contentType');
+      debugPrint('  Content-Length: ${response.headers['content-length']}');
+      debugPrint('  Cache-Control: ${response.headers['cache-control']}');
+      debugPrint('  X-Cache: ${response.headers['x-cache']}');
+
       String mimeType = 'image/jpeg';
       if (contentType.contains('png'))
         mimeType = 'image/png';
       else if (contentType.contains('webp'))
         mimeType = 'image/webp';
-      else if (contentType.contains('heic'))
+      else if (contentType.contains('heic') || contentType.contains('heif'))
         mimeType = 'image/heif';
+      else if (contentType.contains('avif'))
+        mimeType = 'image/avif';
+      else if (contentType.contains('tiff'))
+        mimeType = 'image/tiff';
+
+      // Check for C2PA Link header (external manifest reference per C2PA spec)
+      final linkHeader = response.headers['link'];
+      String? externalManifestUrl;
+      if (linkHeader != null && linkHeader.contains('rel=c2pa-manifest')) {
+        debugPrint('Found C2PA Link header: $linkHeader');
+        // Parse the Link header to extract manifest URL
+        final linkMatch = RegExp(
+          r'<([^>]+)>.*rel=c2pa-manifest',
+        ).firstMatch(linkHeader);
+        if (linkMatch != null) {
+          externalManifestUrl = linkMatch.group(1);
+          debugPrint('External manifest URL: $externalManifestUrl');
+        }
+      }
 
       setState(() {
         _imageBytes = bytes;
@@ -377,8 +608,13 @@ class _AnalyzeViewState extends State<AnalyzeView>
       );
       debugPrint('C2PA ANALYSIS: Starting URL bytes analysis');
       debugPrint('  URL: $url');
+      debugPrint('  Effective URL: $originalUrl');
+      debugPrint('  Is stripping service: $isStrippingService');
       debugPrint('  Bytes: ${bytes.length}');
       debugPrint('  MIME: $mimeType');
+      if (externalManifestUrl != null) {
+        debugPrint('  External manifest: $externalManifestUrl');
+      }
       debugPrint(
         '═══════════════════════════════════════════════════════════════',
       );
@@ -408,6 +644,11 @@ class _AnalyzeViewState extends State<AnalyzeView>
         _isLoading = false;
       });
 
+      // Show warning if URL is from a metadata-stripping service and no manifest found
+      if (isStrippingService && !_hasManifest(result.status)) {
+        _showMetadataStrippingWarning(url);
+      }
+
       // Fallback: If no C2PA manifest, try SynthID
       if (!_hasManifest(result.status)) {
         _analyzeSynthIdFromBytes(bytes);
@@ -418,6 +659,51 @@ class _AnalyzeViewState extends State<AnalyzeView>
       _setLoading(false, '');
       _showError('Failed: $e');
     }
+  }
+
+  void _showMetadataStrippingWarning(String url) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.amber,
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Metadata may have been stripped',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 4),
+            Text(
+              'This URL is from a service known to strip C2PA metadata. '
+              'Try downloading the original file or use a direct source URL.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.orange.shade800,
+        duration: const Duration(seconds: 6),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Learn More',
+          textColor: Colors.white,
+          onPressed: () {
+            launchUrl(Uri.parse('https://contentcredentials.org/verify'));
+          },
+        ),
+      ),
+    );
   }
 
   void _setImage(File? file, Uint8List? bytes, String? url) {
@@ -666,19 +952,35 @@ class _AnalyzeViewState extends State<AnalyzeView>
     return SafeArea(
       child: FadeTransition(
         opacity: _fadeAnimation,
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo Area
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    shape: BoxShape.circle,
-                    boxShadow: [
+        child: Stack(
+          children: [
+            // Settings button in top right
+            Positioned(
+              top: AppSpacing.md,
+              right: AppSpacing.md,
+              child: IconButton(
+                icon: Icon(
+                  Icons.settings_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                onPressed: _showSettingsDialog,
+                tooltip: 'Settings',
+              ),
+            ),
+            // Main content
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo Area
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
                       BoxShadow(
                         color: theme.colorScheme.shadow.withOpacity(0.05),
                         blurRadius: 20,
@@ -777,6 +1079,8 @@ class _AnalyzeViewState extends State<AnalyzeView>
               ],
             ),
           ),
+        ),
+          ],
         ),
       ),
     );
@@ -1097,34 +1401,95 @@ class _AnalyzeViewState extends State<AnalyzeView>
 
   Widget _buildVerificationCard() {
     final result = _analysisResult!;
-    final hasCredentials = _hasManifest(result.status);
     final isAi = result.aiInfo?.isAiGenerated ?? false;
     final theme = Theme.of(context);
+    final isFromUrl = _imageUrl != null;
 
     Color statusColor;
     IconData statusIcon;
     String statusTitle;
     String statusDesc;
 
+    // Determine status based on verification result following the semantic color system:
+    // - Verified (Green): Valid C2PA credentials, intact signature, trusted chain
+    // - AI Generated (Purple): C2PA assertions indicate AI generation
+    // - Warning (Orange): Ambiguities - expired certs, incomplete trust, parsing errors, no manifest
+    // - Invalid (Red): Manifest found but hash mismatch - indicates manipulation
+
     if (isAi) {
+      // AI Generated (Purple) - Content contains AI generation markers
       statusColor = AppColors.aiGenerated;
       statusIcon = Icons.auto_awesome_rounded;
       statusTitle = 'AI Generated';
       statusDesc = 'Content contains AI generation markers';
     } else if (result.status is VerificationStatus_Verified) {
+      // Verified (Green) - Valid credentials and trusted chain
       statusColor = AppColors.verified;
       statusIcon = Icons.verified_rounded;
       statusTitle = 'Verified Authentic';
       statusDesc = 'Digital signature is valid and trusted';
-    } else if (!hasCredentials) {
+    } else if (result.status is VerificationStatus_SignatureInvalid) {
+      // Invalid (Red) - Signature mismatch indicates manipulation
+      statusColor = AppColors.danger;
+      statusIcon = Icons.dangerous_rounded;
+      statusTitle = 'Invalid Signature';
+      statusDesc = 'Content may have been modified after signing';
+    } else if (result.status is VerificationStatus_CertificateExpired) {
+      // Warning (Orange) - Certificate expired but content may still be authentic
+      statusColor = AppColors.warning;
+      statusIcon = Icons.schedule_rounded;
+      statusTitle = 'Certificate Expired';
+      statusDesc = 'Credentials are valid but the certificate has expired';
+    } else if (result.status is VerificationStatus_CertificateUntrusted) {
+      // Warning (Orange) - Untrusted certificate chain
+      statusColor = AppColors.warning;
+      statusIcon = Icons.security_rounded;
+      statusTitle = 'Untrusted Certificate';
+      statusDesc = 'Certificate could not be verified against trusted sources';
+    } else if (result.status is VerificationStatus_NoManifest) {
+      // Warning (Orange) - No C2PA data found
       statusColor = AppColors.warning;
       statusIcon = Icons.help_outline_rounded;
       statusTitle = 'No Credentials';
-      statusDesc = 'No C2PA metadata found';
+      if (isFromUrl) {
+        statusDesc = 'No C2PA metadata found. The source may have stripped it.';
+      } else {
+        statusDesc = 'No C2PA metadata found';
+      }
+    } else if (result.status is VerificationStatus_Error) {
+      // Check if error message indicates C2PA data that couldn't be parsed
+      final errorStatus = result.status as VerificationStatus_Error;
+      final errorMsg = errorStatus.message.toLowerCase();
+
+      if (errorMsg.contains('c2pa data') ||
+          errorMsg.contains('could not be parsed') ||
+          errorMsg.contains('unsupported format') ||
+          errorMsg.contains('corrupted')) {
+        // Warning (Orange) - C2PA data exists but couldn't be processed
+        statusColor = AppColors.warning;
+        statusIcon = Icons.warning_amber_rounded;
+        statusTitle = 'Parsing Issue';
+        statusDesc = 'C2PA data found but could not be fully verified';
+      } else if (errorMsg.contains('remote') || errorMsg.contains('fetch')) {
+        // Warning (Orange) - Remote manifest issue
+        statusColor = AppColors.warning;
+        statusIcon = Icons.cloud_off_rounded;
+        statusTitle = 'Connection Issue';
+        statusDesc = 'Could not retrieve remote credentials';
+      } else {
+        // Warning (Orange) - Generic error
+        statusColor = AppColors.warning;
+        statusIcon = Icons.error_outline_rounded;
+        statusTitle = 'Analysis Issue';
+        statusDesc = errorStatus.message.isNotEmpty
+            ? errorStatus.message
+            : 'Could not verify credentials';
+      }
     } else {
-      statusColor = AppColors.danger;
-      statusIcon = Icons.warning_rounded;
-      statusTitle = 'Verification Failed';
+      // Fallback - treat as warning
+      statusColor = AppColors.warning;
+      statusIcon = Icons.help_outline_rounded;
+      statusTitle = 'Unknown Status';
       statusDesc = _getStatusSubtitle(result.status);
     }
 
@@ -1258,6 +1623,124 @@ class _AnalyzeViewState extends State<AnalyzeView>
     );
   }
 
+  /// Convert C2PA action name to human-readable format
+  String _formatActionName(String action) {
+    // Remove c2pa. prefix and convert to readable format
+    var name = action.replaceFirst('c2pa.', '');
+    // Convert snake_case or camelCase to Title Case
+    name = name
+        .replaceAllMapped(RegExp(r'[_.]'), (match) => ' ')
+        .replaceAllMapped(
+          RegExp(r'([a-z])([A-Z])'),
+          (match) => '${match.group(1)} ${match.group(2)}',
+        );
+    // Capitalize first letter of each word
+    return name
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
+
+  /// Parse action parameters JSON and return a human-readable description
+  String? _formatActionParameters(String? parametersJson) {
+    if (parametersJson == null || parametersJson.isEmpty) return null;
+    try {
+      final params = jsonDecode(parametersJson) as Map<String, dynamic>;
+      if (params.isEmpty) return null;
+
+      // Format parameters into a readable string
+      final parts = <String>[];
+      for (final entry in params.entries) {
+        final key = entry.key;
+        final value = entry.value;
+
+        // Skip very long or binary values
+        if (value is String && value.startsWith('<')) continue;
+
+        // Handle Adobe ACR parameters specially
+        if (key == 'com.adobe.acr') {
+          parts.add(value.toString());
+        } else if (key == 'com.adobe.acr.value') {
+          // This is the value for the previous parameter
+          if (parts.isNotEmpty) {
+            parts[parts.length - 1] = '${parts.last}: $value';
+          }
+        } else if (key == 'description') {
+          parts.add(value.toString());
+        } else {
+          // Generic parameter display
+          parts.add('$key: $value');
+        }
+      }
+      return parts.isEmpty ? null : parts.join(', ');
+    } catch (e) {
+      debugPrint('Error parsing action parameters: $e');
+      return null;
+    }
+  }
+
+  Widget _buildActionRow(ContentAction action, {bool isLast = false}) {
+    final theme = Theme.of(context);
+    final formattedName = _formatActionName(action.action);
+    final parameterDetails = _formatActionParameters(action.parameters);
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : AppSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  formattedName,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (action.softwareAgent != null)
+                Text(
+                  action.softwareAgent!,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
+          if (parameterDetails != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 16),
+              child: Text(
+                parameterDetails,
+                style: AppTypography.labelSmall.copyWith(
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          if (action.when != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                action.when!,
+                style: AppTypography.labelSmall.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.7,
+                  ),
+                  fontSize: 11,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCleanDetailRow(
     String label,
     String value, {
@@ -1292,9 +1775,102 @@ class _AnalyzeViewState extends State<AnalyzeView>
     );
   }
 
+  Widget _buildBulletPoint(String text) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: AppSpacing.sm, bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '•  ',
+            style: AppTypography.bodySmall.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTypography.bodySmall.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProvenanceCard() {
     final result = _analysisResult!;
     final hasCredentials = _hasManifest(result.status);
+    final hasC2paIssues = _hasC2paDataWithIssues(result.status);
+    final theme = Theme.of(context);
+
+    // Show info card for C2PA data that couldn't be parsed
+    if (!hasCredentials && hasC2paIssues) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.lg),
+        child: GlassCard(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          borderColor: AppColors.warning.withOpacity(0.3),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Icon(
+                      Icons.info_outline_rounded,
+                      color: AppColors.warning,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Credential Details Unavailable',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'This image contains C2PA metadata, but the credentials could not be fully parsed. '
+                'This may be due to:',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _buildBulletPoint('An unsupported or newer C2PA format'),
+              _buildBulletPoint('Corrupted or incomplete credential data'),
+              _buildBulletPoint(
+                'A cloud-based manifest that could not be retrieved',
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'The presence of C2PA data indicates this image was processed by a C2PA-aware application.',
+                style: AppTypography.bodySmall.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (!hasCredentials) return const SizedBox.shrink();
 
     return Column(
@@ -1328,18 +1904,22 @@ class _AnalyzeViewState extends State<AnalyzeView>
             icon: Icons.history_rounded,
             children: [
               ...result.actions
-                  .take(5)
+                  .asMap()
+                  .entries
+                  .take(8)
                   .map(
-                    (a) => _buildCleanDetailRow(
-                      a.action,
-                      a.softwareAgent ?? 'Unknown',
+                    (entry) => _buildActionRow(
+                      entry.value,
+                      isLast:
+                          entry.key == result.actions.length - 1 ||
+                          entry.key == 7,
                     ),
                   ),
-              if (result.actions.length > 5)
+              if (result.actions.length > 8)
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.sm),
                   child: Text(
-                    '+${result.actions.length - 5} more actions',
+                    '+${result.actions.length - 8} more actions',
                     style: AppTypography.labelSmall.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                     ),
@@ -1802,75 +2382,124 @@ class _AnalyzeViewState extends State<AnalyzeView>
           right: AppSpacing.xxl,
           top: AppSpacing.lg,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.outline.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.xxl),
+
+              Text(
+                'Enter Image URL',
+                style: AppTypography.headlineMedium.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.sm),
+
+              Text(
+                'Paste a direct link to an image to analyze',
+                style: AppTypography.bodySmall.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+
+              TextField(
+                controller: _urlController,
+                decoration: InputDecoration(
+                  hintText: 'https://example.com/image.jpg',
+                  prefixIcon: Icon(
+                    Icons.link_rounded,
+                    color: theme.colorScheme.primary,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.paste_rounded),
+                    onPressed: () async {
+                      final data = await Clipboard.getData('text/plain');
+                      if (data?.text != null) {
+                        _urlController.text = data!.text!;
+                      }
+                    },
+                  ),
+                ),
+                keyboardType: TextInputType.url,
+                autocorrect: false,
+                onSubmitted: (_) => _analyzeFromUrl(),
+              ),
+
+              const SizedBox(height: AppSpacing.lg),
+
+              // C2PA URL Tips
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outline.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.tips_and_updates_rounded,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          'Tips for C2PA Verification',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '• Use direct links from original sources (news sites, official sources)\n'
+                      '• Avoid social media links (Twitter, Facebook, Instagram strip metadata)\n'
+                      '• Avoid CDN/thumbnail URLs with resize parameters\n'
+                      '• Links ending in .jpg, .png, .heic work best',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: AppSpacing.xxl),
+              const SizedBox(height: AppSpacing.xl),
 
-            Text(
-              'Enter Image URL',
-              style: AppTypography.headlineMedium.copyWith(
-                color: theme.colorScheme.onSurface,
+              GradientButton(
+                label: 'Analyze Image',
+                icon: Icons.search_rounded,
+                onPressed: _analyzeFromUrl,
+                width: double.infinity,
               ),
-            ),
 
-            const SizedBox(height: AppSpacing.sm),
-
-            Text(
-              'Paste a direct link to an image to analyze',
-              style: AppTypography.bodySmall.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            TextField(
-              controller: _urlController,
-              decoration: InputDecoration(
-                hintText: 'https://example.com/image.jpg',
-                prefixIcon: Icon(
-                  Icons.link_rounded,
-                  color: theme.colorScheme.primary,
-                ),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.paste_rounded),
-                  onPressed: () async {
-                    final data = await Clipboard.getData('text/plain');
-                    if (data?.text != null) {
-                      _urlController.text = data!.text!;
-                    }
-                  },
-                ),
-              ),
-              keyboardType: TextInputType.url,
-              autocorrect: false,
-              onSubmitted: (_) => _analyzeFromUrl(),
-            ),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            GradientButton(
-              label: 'Analyze Image',
-              icon: Icons.search_rounded,
-              onPressed: _analyzeFromUrl,
-              width: double.infinity,
-            ),
-
-            const SizedBox(height: AppSpacing.xxxl),
-          ],
+              const SizedBox(height: AppSpacing.xxxl),
+            ],
+          ),
         ),
       ),
     );
@@ -1917,7 +2546,27 @@ class _AnalyzeViewState extends State<AnalyzeView>
       certificateExpired: () => true,
       certificateUntrusted: () => true,
       noManifest: () => false,
-      error: (_) => false,
+      error: (msg) {
+        // Check if error message indicates C2PA data exists but couldn't be parsed
+        final lowerMsg = msg.toLowerCase();
+        return lowerMsg.contains('c2pa') ||
+            lowerMsg.contains('manifest') ||
+            lowerMsg.contains('could not be parsed') ||
+            lowerMsg.contains('unsupported format');
+      },
     );
+  }
+
+  /// Check if the status indicates C2PA data was found but had issues
+  bool _hasC2paDataWithIssues(VerificationStatus status) {
+    if (status is VerificationStatus_Error) {
+      final lowerMsg = status.message.toLowerCase();
+      return lowerMsg.contains('c2pa') ||
+          lowerMsg.contains('manifest') ||
+          lowerMsg.contains('could not be parsed') ||
+          lowerMsg.contains('unsupported format') ||
+          lowerMsg.contains('corrupted');
+    }
+    return false;
   }
 }

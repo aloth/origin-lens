@@ -7,6 +7,54 @@ use std::io::{BufReader, Seek, SeekFrom};
 use std::path::Path;
 use exif::{In, Tag};
 
+// Helper function to convert CBOR Value to JSON Value
+fn cbor_to_json(cbor_val: &serde_cbor::Value) -> Option<serde_json::Value> {
+    match cbor_val {
+        serde_cbor::Value::Null => Some(serde_json::Value::Null),
+        serde_cbor::Value::Bool(b) => Some(serde_json::Value::Bool(*b)),
+        serde_cbor::Value::Integer(i) => {
+            // CBOR uses i128, but JSON numbers typically use i64/f64
+            if let Ok(i64_val) = i64::try_from(*i) {
+                Some(serde_json::Value::Number(i64_val.into()))
+            } else {
+                // For very large integers, represent as string
+                Some(serde_json::Value::String(i.to_string()))
+            }
+        }
+        serde_cbor::Value::Float(f) => {
+            serde_json::Number::from_f64(*f).map(serde_json::Value::Number)
+        }
+        serde_cbor::Value::Text(s) => Some(serde_json::Value::String(s.clone())),
+        serde_cbor::Value::Bytes(b) => {
+            // Convert bytes to string representation
+            Some(serde_json::Value::String(format!("<{} bytes>", b.len())))
+        }
+        serde_cbor::Value::Array(arr) => {
+            let json_arr: Vec<serde_json::Value> = arr
+                .iter()
+                .filter_map(cbor_to_json)
+                .collect();
+            Some(serde_json::Value::Array(json_arr))
+        }
+        serde_cbor::Value::Map(map) => {
+            let json_map: serde_json::Map<String, serde_json::Value> = map
+                .iter()
+                .filter_map(|(k, v)| {
+                    // CBOR map keys can be various types, convert to string
+                    let key = match k {
+                        serde_cbor::Value::Text(s) => Some(s.clone()),
+                        serde_cbor::Value::Integer(i) => Some(i.to_string()),
+                        _ => None,
+                    };
+                    key.and_then(|k| cbor_to_json(v).map(|v| (k, v)))
+                })
+                .collect();
+            Some(serde_json::Value::Object(json_map))
+        }
+        _ => None,
+    }
+}
+
 // Helper function to convert SoftwareAgent to String
 fn software_agent_to_string(agent: &SoftwareAgent) -> String {
     match agent {
@@ -93,14 +141,15 @@ const AI_GENERATORS: &[&str] = &[
 ];
 
 // C2PA digital source types that indicate AI generation
+// Only include types that SPECIFICALLY indicate trained/algorithmic AI generation
+// See: https://cv.iptc.org/newscodes/digitalsourcetype/
 const AI_DIGITAL_SOURCE_TYPES: &[&str] = &[
     "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
-    "http://cv.iptc.org/newscodes/digitalsourcetype/algorithmicMedia",
     "http://cv.iptc.org/newscodes/digitalsourcetype/compositeWithTrainedAlgorithmicMedia",
     "trainedAlgorithmicMedia",
-    "algorithmicMedia",
     "compositeWithTrainedAlgorithmicMedia",
-    "digitalArt",
+    // Note: "algorithmicMedia" alone is ambiguous - could be filters/effects
+    // Note: "digitalArt" is NOT AI - it's manually created digital artwork
 ];
 
 /// Verification status of a C2PA manifest
@@ -130,6 +179,12 @@ pub struct ContentAction {
     pub software_agent: Option<String>,
     pub when: Option<String>,
     pub description: Option<String>,
+    /// Parameters specific to this action (e.g., for color_adjustments: Exposure2012, Blacks2012, etc.)
+    pub parameters: Option<String>,
+    /// Reason for this action (C2PA v2)
+    pub reason: Option<String>,
+    /// Digital source type (e.g., trainedAlgorithmicMedia for AI)
+    pub source_type: Option<String>,
 }
 
 /// AI generation information
@@ -539,8 +594,9 @@ pub fn analyze_c2pa_from_path(file_path: String) -> C2paAnalysisResult {
 #[frb(sync)]
 pub fn analyze_c2pa_from_bytes(data: Vec<u8>, mime_type: String) -> C2paAnalysisResult {
     let data_clone = data.clone();
-    let cursor = std::io::Cursor::new(data);
-
+    
+    // First try synchronous parsing
+    let cursor = std::io::Cursor::new(data.clone());
     match Reader::from_stream(&mime_type, cursor) {
         Ok(manifest_reader) => {
             let mut result = parse_manifest_reader(&manifest_reader);
@@ -572,6 +628,68 @@ pub fn analyze_c2pa_from_bytes(data: Vec<u8>, mime_type: String) -> C2paAnalysis
         }
         Err(e) => {
             let error_msg = e.to_string().to_lowercase();
+            
+            // Check if remote manifest fetching is needed
+            if error_msg.contains("remote manifest") || error_msg.contains("fetch") {
+                // Try async version which supports remote manifest fetching
+                // Create a tokio runtime for async operations
+                match tokio::runtime::Runtime::new() {
+                    Ok(rt) => {
+                        let data_for_async = data.clone();
+                        let mime_for_async = mime_type.clone();
+                        let result = rt.block_on(async {
+                            let cursor = std::io::Cursor::new(data_for_async);
+                            match Reader::from_stream_async(&mime_for_async, cursor).await {
+                                Ok(manifest_reader) => {
+                                    let mut result = parse_manifest_reader(&manifest_reader);
+                                    if let Some(exif_info) = parse_exif_from_bytes(&data_clone) {
+                                        if exif_info.ai_detected {
+                                            if let Some(ref mut ai_info) = result.ai_info {
+                                                if ai_info.detection_source == Some("c2pa".to_string()) {
+                                                    ai_info.detection_source = Some("both".to_string());
+                                                }
+                                                if ai_info.generator_name.is_none() {
+                                                    ai_info.generator_name = exif_info.ai_generator.clone();
+                                                }
+                                            } else {
+                                                result.ai_info = Some(AiInfo {
+                                                    is_ai_generated: true,
+                                                    generator_name: exif_info.ai_generator.clone(),
+                                                    model_name: None,
+                                                    detection_source: Some("exif".to_string()),
+                                                });
+                                            }
+                                        }
+                                        result.exif_info = Some(exif_info);
+                                    }
+                                    result
+                                }
+                                Err(async_e) => {
+                                    let async_error_msg = async_e.to_string().to_lowercase();
+                                    if async_error_msg.contains("not found")
+                                        || async_error_msg.contains("jumbfnotfound")
+                                        || async_error_msg.contains("no manifest")
+                                        || async_error_msg.contains("jumbf")
+                                    {
+                                        if let Some(exif_info) = parse_exif_from_bytes(&data_clone) {
+                                            C2paAnalysisResult::no_manifest_with_exif(exif_info)
+                                        } else {
+                                            C2paAnalysisResult::no_manifest()
+                                        }
+                                    } else {
+                                        C2paAnalysisResult::error(async_e.to_string())
+                                    }
+                                }
+                            }
+                        });
+                        return result;
+                    }
+                    Err(rt_e) => {
+                        return C2paAnalysisResult::error(format!("Failed to create async runtime: {}", rt_e));
+                    }
+                }
+            }
+            
             // Check for various "no manifest" conditions
             if error_msg.contains("not found")
                 || error_msg.contains("jumbfnotfound")
@@ -678,11 +796,31 @@ fn parse_manifest_reader(reader: &Reader) -> C2paAnalysisResult {
     let mut actions = Vec::new();
     if let Ok(action_assertions) = manifest.find_assertion::<Actions>(Actions::LABEL) {
         for action in action_assertions.actions() {
+            // Convert parameters HashMap to JSON string for easier handling in Dart
+            let params_json = action.parameters().and_then(|params| {
+                if params.is_empty() {
+                    None
+                } else {
+                    // Convert CBOR values to serde_json Value for serialization
+                    let json_map: std::collections::HashMap<String, serde_json::Value> = params
+                        .iter()
+                        .filter_map(|(k, v)| {
+                            // Convert serde_cbor::Value to serde_json::Value
+                            cbor_to_json(v).map(|jv| (k.clone(), jv))
+                        })
+                        .collect();
+                    serde_json::to_string(&json_map).ok()
+                }
+            });
+            
             actions.push(ContentAction {
                 action: action.action().to_string(),
                 software_agent: action.software_agent().map(software_agent_to_string),
                 when: action.when().map(|t| t.to_string()),
                 description: None,
+                parameters: params_json,
+                reason: action.reason().map(|s| s.to_string()),
+                source_type: action.source_type().map(|s| s.to_string()),
             });
         }
     }
@@ -832,7 +970,7 @@ fn extract_model_name(generator: &str) -> Option<String> {
 fn check_json_for_ai_indicators(json: &Value) -> Option<AiInfo> {
     let json_str = json.to_string().to_lowercase();
     
-    // Check for digitalSourceType indicating AI generation
+    // Check for digitalSourceType indicating AI generation (only trainedAlgorithmicMedia variants)
     for source_type in AI_DIGITAL_SOURCE_TYPES {
         if json_str.contains(&source_type.to_lowercase()) {
             // Try to extract more specific generator info
@@ -846,8 +984,8 @@ fn check_json_for_ai_indicators(json: &Value) -> Option<AiInfo> {
         }
     }
     
-    // Check for c2pa.ai assertions
-    if json_str.contains("c2pa.ai") || json_str.contains("\"ai\"") {
+    // Check for explicit c2pa.ai assertions (must be the exact assertion label)
+    if json_str.contains("\"c2pa.ai\"") || json_str.contains("\"label\":\"c2pa.ai") {
         let generator = extract_generator_from_json(json);
         return Some(AiInfo {
             is_ai_generated: true,
@@ -857,20 +995,9 @@ fn check_json_for_ai_indicators(json: &Value) -> Option<AiInfo> {
         });
     }
     
-    // Check for specific AI tool mentions in assertions
-    for gen in AI_GENERATORS {
-        if json_str.contains(gen) {
-            return Some(AiInfo {
-                is_ai_generated: true,
-                generator_name: Some(format!("Detected: {}", gen)),
-                model_name: extract_model_name(&json_str),
-                detection_source: Some("c2pa".to_string()),
-            });
-        }
-    }
-    
-    // Check for "trained" or "synthetic" indicators
-    if json_str.contains("trained") && json_str.contains("algorithmic") {
+    // Check for "trained" AND "algorithmic" together (indicates trained AI model)
+    if json_str.contains("trainedalgorithmic") || 
+       (json_str.contains("trained") && json_str.contains("algorithmic") && json_str.contains("media")) {
         return Some(AiInfo {
             is_ai_generated: true,
             generator_name: Some("AI/ML Generated Content".to_string()),
@@ -879,7 +1006,8 @@ fn check_json_for_ai_indicators(json: &Value) -> Option<AiInfo> {
         });
     }
     
-    if json_str.contains("synthetic") || json_str.contains("artificially generated") {
+    // Check for explicit "synthetic media" or "artificially generated" phrases
+    if json_str.contains("synthetic media") || json_str.contains("artificially generated") {
         return Some(AiInfo {
             is_ai_generated: true,
             generator_name: Some("Synthetic/AI Generated".to_string()),

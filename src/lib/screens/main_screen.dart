@@ -69,16 +69,11 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
     _intentDataStreamSubscription = ReceiveSharingIntent.instance
         .getMediaStream()
-        .listen(
-          (List<SharedMediaFile> value) {
-            if (value.isNotEmpty) {
-              _handleSharedFile(value.first);
-            }
-          },
-          onError: (err) {
-            // Handle error
-          },
-        );
+        .listen((List<SharedMediaFile> value) {
+          if (value.isNotEmpty) {
+            _handleSharedFile(value.first);
+          }
+        }, onError: (err) {});
 
     ReceiveSharingIntent.instance.getInitialMedia().then((
       List<SharedMediaFile> value,
@@ -148,7 +143,6 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             _bounceController.forward();
           },
           children: [
-            // const HomeView(), // Dashboard commented out
             AnalyzeView(initialImage: _sharedFile),
             const FaqView(),
           ],
