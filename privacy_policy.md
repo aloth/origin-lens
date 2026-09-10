@@ -1,88 +1,97 @@
 # Privacy Policy for Origin Lens
 
-**Effective Date:** December 16, 2025
+**Effective Date:** September 10, 2026
 
-At Origin Lens ("we," "us," or "our"), operated by Alexander Loth and Dominique Conceicao Rosario, we are committed to protecting your privacy. This Privacy Policy explains our practices regarding the collection, use, and disclosure of information when you use our mobile application, Origin Lens ("App"). Our policy is simple because our App is designed from the ground up to protect your privacy.
+At Origin Lens ("we," "us," or "our"), operated by Alexander Loth and Dominique Conceicao Rosario, we are committed to protecting your privacy. This Privacy Policy explains our practices regarding the collection, use, and disclosure of information when you use our mobile application, Origin Lens ("App").
 
 We comply with applicable privacy laws and regulations including the General Data Protection Regulation (GDPR) and the California Consumer Privacy Act (CCPA).
 
 ## 1. Our Guiding Principle: We Don't Collect Your Data
 
-Origin Lens is a privacy-first media verification utility. We do not collect, store, track, or share any personal data from you. The App's core functions – analyzing images for C2PA Content Credentials and EXIF metadata – run entirely on your device, and we have no access to your photos or the images you analyze.
+Origin Lens is a privacy-first media verification utility. We do not collect, store, track, or share any personal data from you, and we operate no servers that receive your images.
 
-### Optional Features Using External Services
+The App's core verification – C2PA Content Credentials, cryptographic signature checks, asset-binding checks and EXIF metadata parsing – runs entirely on your device.
 
-Origin Lens includes an optional **Reverse Image Search** feature that, when activated by you, uploads images to third-party search services (such as SerpAPI, which uses Google, Bing, and Yandex) to find where images have appeared online. This feature:
+Two optional features send an image to a third-party service. **Both ask for your confirmation before anything leaves your device**, and both can be declined:
 
-- **Requires explicit user action** – You must tap "Search Image Context" to use it
-- **Shows a clear privacy warning** – Before any upload, a notice explains that images will be sent to external services
-- **Is completely optional** – Core C2PA and EXIF verification works without it
-- **Supports user-provided API keys** – You can use your own API keys for enhanced privacy control
+- **AI assessment** – offered when an image carries no Content Credentials.
+- **Reverse image search** – offered when you tap "Check Online Context".
+
+These are the only paths on which an image you analyze leaves your device. They are described in Section 3.
 
 ## 2. Information We Do Not Collect
 
-Since our App processes all image analysis locally on your device, we do not collect, store, or have access to:
+We do not operate servers that receive your data. We do not collect, store, or have access to:
 
-- **Images or Photos:** We do not upload, store, or transmit any images you analyze. All images remain on your device.
-- **C2PA Credentials:** We do not record the C2PA Content Credentials or verification results.
+- **Images or Photos:** We never receive images you analyze. Where an image is sent to a third-party service (Section 3), it goes directly from your device to that service, with your confirmation, and not to us.
+- **C2PA Credentials:** We do not record Content Credentials or verification results.
 - **EXIF Metadata:** We do not collect or store EXIF metadata extracted from your images.
 - **Personal Information:** We do not collect names, email addresses, phone numbers, or any other personal identifiers.
-- **Usage Analytics:** We do not collect analytics data on how you use the App (e.g., number of images analyzed, verification results, or taps in the App).
+- **Usage Analytics:** We do not collect analytics data on how you use the App.
 - **Location Data:** We do not collect or track your physical location.
-- **Device Information:** We do not collect information about your device such as identifiers, operating system version, or hardware models.
+- **Device Information:** We do not collect device identifiers, operating system versions, or hardware models.
 
 ## 3. How the App Works
 
 ### Core Verification (On-Device)
 
-Origin Lens performs C2PA verification and EXIF metadata parsing entirely on your device. When you select an image from your gallery, files, or a URL, all cryptographic verification occurs locally using native Rust libraries. No information about these analyses is sent to our servers or to any third party.
+Origin Lens performs C2PA verification and EXIF metadata parsing entirely on your device. When you select an image from your gallery, files, or a URL, manifest parsing, signature verification, asset-binding checks and metadata extraction occur locally using native Rust libraries. No information about these analyses is sent anywhere.
+
+### AI Assessment (Optional, Uses Google Gemini)
+
+When an image carries **no C2PA Content Credentials**, the App can ask a general-purpose AI model whether the image appears to be AI-generated.
+
+- **What is sent:** the full image, encoded in the request, together with a short text prompt.
+- **Where it goes:** the Google Gemini API (`generativelanguage.googleapis.com`), using the Gemini 2.5 Flash model.
+- **When:** only after you confirm the upload in a dialog that states what will be sent. You may decline, or choose not to be asked again for future images.
+- **Only with a key:** the request is skipped entirely when no API key is configured.
+- **What comes back:** the model's written opinion, which the App parses. This is an assessment, not a cryptographic proof.
+
+Google's handling of data sent to this API is governed by Google's own terms: https://ai.google.dev/gemini-api/terms and https://policies.google.com/privacy
 
 ### Reverse Image Search (Optional, Uses External Services)
 
-If you choose to use the Reverse Image Search feature, the App will upload your image to third-party search services to find where it has appeared online. Specifically:
+If you tap "Check Online Context", the App can look for earlier appearances of an image online.
 
-- **SerpAPI** (serpapi.com) – A search API service that queries Google, Bing, and Yandex image search
-- **imgbb** (imgbb.com) – A temporary image hosting service used to provide a URL for local images
+- **What is sent:** the image, or a URL to it.
+- **Where it goes:** SerpAPI (which queries Google, Bing, and Yandex), or those search engines directly. When a local image needs a public URL first, it is uploaded to imgbb, a temporary image host.
+- **When:** only after you confirm the upload in a dialog. You may decline, or choose not to be asked again.
+- **Your own keys:** you can supply your own SerpAPI key in the App's settings.
 
 These services have their own privacy policies:
 - SerpAPI: https://serpapi.com/privacy-policy
 - imgbb: https://imgbb.com/privacy
 
-Images uploaded for reverse search are:
-- Uploaded only when you explicitly request a context search
-- Used solely to perform the reverse image search
-- Subject to the third-party services' data retention policies
-
-You can use your own API keys for these services in the App's Settings, giving you direct control over your relationship with these providers.
+Images sent for reverse search are used to perform that search and are subject to those services' retention policies. Where the App requests a short expiry for a hosted image, that request is made to the host; we cannot verify deletion on your behalf.
 
 ## 4. Third-Party Services
 
-### Services Used by the App
+The App contacts these services, and only for the optional features described above:
 
-Origin Lens integrates with the following third-party services for the optional Reverse Image Search feature:
+- **Google Gemini API** (`generativelanguage.googleapis.com`) – AI assessment of images without Content Credentials
+- **SerpAPI** (serpapi.com) – reverse image search across Google, Bing, and Yandex
+- **imgbb** (imgbb.com) – temporary image hosting, used to give a local image a URL for reverse search
+- **Search engines directly** (Google, Bing, Yandex) – reverse image search when SerpAPI is not configured
 
-- **SerpAPI** (serpapi.com) – Provides reverse image search results from Google, Bing, and Yandex
-- **imgbb** (imgbb.com) – Provides temporary image hosting for local images during reverse search
-
-These services are only contacted when you explicitly use the Reverse Image Search feature. The App includes default API keys to enable this functionality, but you can provide your own API keys in Settings for greater privacy control.
+The App ships with default API keys so these features work without setup. You can replace them with your own keys in Settings. Removing a key you supplied returns the App to its default key rather than disabling the feature.
 
 ### No Analytics or Advertising
 
-We do not integrate with any analytics, advertising, or tracking services. There are no embedded SDKs from companies like Google Analytics, Facebook, or any ad networks.
+We do not integrate with any analytics, advertising, or tracking services. There are no embedded SDKs from analytics or ad networks.
 
 ### URL Image Downloads
 
-If you choose to analyze an image from a URL, the App will download the image directly to your device for local analysis only. The image is not permanently stored or sent to any of our servers.
+If you analyze an image from a URL, the App downloads it to your device for local analysis. That download is a direct request from your device to the address you provided.
 
 ## 5. Permissions Required
 
-To function properly, Origin Lens may request certain system permissions. These permissions are used solely for the intended functionality and do not result in data collection:
+Origin Lens requests only the permissions its functionality needs:
 
-- **Photo Library Access:** To analyze images from your gallery, the App requests read-only access to your photo library. We only access images you explicitly select for analysis.
-- **File System Access:** To analyze images from files, the App uses the standard iOS file picker. We only access files you explicitly select.
-- **Network Access:** To download images from URLs you provide, the App requires internet access. Downloads are temporary and for local analysis only.
+- **Photo Library Access:** read-only, to analyze images you explicitly select.
+- **File System Access:** through the standard iOS file picker, for files you explicitly select.
+- **Network Access:** to download images from URLs you provide, and for the optional features in Section 3.
 
-We only request permissions that are necessary for the App's functionality, and we do not use those permissions to collect or transmit data.
+We do not use these permissions to collect or transmit data beyond what Section 3 describes.
 
 ## 6. Children's Privacy
 
@@ -90,16 +99,17 @@ Our App is not intended for children under the age of 16 (or a higher age thresh
 
 ## 7. Your Privacy Rights
 
-Your privacy rights are fully respected because your data stays with you.
-- **Access, Correction, Deletion:** All image analysis results are displayed in the App interface only and are not stored. Deleting the App from your device will remove all its associated data, including any temporarily cached images.
+Your privacy rights are respected because your data stays with you. Analysis results are displayed in the App only and are not stored. Deleting the App removes its associated data, including temporarily cached images.
+
+Images sent to a third-party service under Section 3 are subject to that service's own policy and rights process, linked above.
 
 ## 8. Data Retention
 
-The App does not retain any images or analysis results. All processing is ephemeral and occurs in memory during active use. Any temporary files (such as images downloaded from URLs) are managed by iOS and can be cleared through standard system cache management or by uninstalling the App.
+The App does not retain images or analysis results. Processing is ephemeral and occurs in memory during active use. Temporary files, such as images downloaded from URLs, are managed by iOS and can be cleared through standard system cache management or by uninstalling the App.
 
 ## 9. Changes to This Privacy Policy
 
-We may update this Privacy Policy from time to time. The updated policy will be posted in the App and/or on our website, and the "Effective Date" at the top will be revised. We encourage you to review this policy periodically.
+We may update this Privacy Policy from time to time. The current version is published in the App's source repository and linked from the App, and the "Effective Date" at the top is revised when it changes. We encourage you to review this policy periodically.
 
 ## 10. Contact Us
 
