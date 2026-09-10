@@ -43,8 +43,12 @@ jobs:
         working-directory: src
         run: flutter pub get
 
+      # Restricted to lib/: the tree also contains rust_builder/cargokit, a
+      # vendored build tool that is its own Dart package with its own
+      # dependencies. Analysing it here reports errors for imports that were
+      # never resolved in this workspace, which says nothing about this app.
       # Warnings and lints are reported but do not fail the build; only real
-      # analyzer errors do.
+      # analyzer errors in application code do.
       - name: Analyze
         working-directory: src
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: flutter analyze lib/ --no-fatal-infos --no-fatal-warnings

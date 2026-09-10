@@ -7,6 +7,7 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Paper](https://img.shields.io/badge/Paper-doi%3A10.1145%2F3795513.3806658-b31b1b)](https://doi.org/10.1145/3795513.3806658)
 [![Preprint](https://img.shields.io/badge/Preprint-arXiv%3A2602.03423-B31B1B)](https://arxiv.org/abs/2602.03423)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22303807.svg)](https://doi.org/10.5281/zenodo.22303807)
 [![GitHub stars](https://img.shields.io/github/stars/aloth/origin-lens?style=social)](https://github.com/aloth/origin-lens/stargazers)
 [![Mastodon](https://img.shields.io/badge/Mastodon-@xlth-6364FF?logo=mastodon&logoColor=white)](https://mastodon.social/@xlth)
 
@@ -182,26 +183,33 @@ If you use Origin Lens or its underlying research in your work, please cite our 
 
 ```bibtex
 @inproceedings{loth2026originlenswebsci,
-  author    = {Loth, Alexander and Rosario, Dominique Conceicao and Ebinger, Peter and Kappes, Martin and Pahl, Marc-Oliver},
-  title     = {Origin Lens: Reclaiming Trust on the {AI}-Mediated Web Through On-Device Image Provenance Verification},
-  booktitle = {18th ACM Web Science Conference (WebSci Companion '26)},
-  year      = {2026},
-  month     = may,
-  publisher = {ACM},
-  address   = {New York, NY, USA},
-  location  = {Braunschweig, Germany},
-  pages     = {1--5},
-  doi       = {10.1145/3795513.3806658}
+    author    = {Loth, Alexander and Rosario, Dominique Conceicao and
+                 Ebinger, Peter and Kappes, Martin and Pahl, Marc-Oliver},
+    title     = {Origin Lens: Reclaiming Trust on the {AI}-Mediated Web
+                 Through On-Device Image Provenance Verification},
+    booktitle = {18th ACM Web Science Conference (WebSci Companion '26), May 26--29, 2026, Braunschweig, Germany
+                 (WebSci '26)},
+    year      = {2026},
+    month     = may,
+    publisher = {ACM},
+    address   = {New York, NY, USA},
+    pages     = {1--5},
+    doi       = {10.1145/3795513.3806658},
+    venue     = {Braunschweig, Germany},
+    eventdate = {2026-05-26/2026-05-29}
 }
 
 @misc{loth2026originlens,
-  author        = {Loth, Alexander and Rosario, Dominique Conceicao and Ebinger, Peter and Kappes, Martin and Pahl, Marc-Oliver},
-  title         = {Origin Lens: {A} Privacy-First Mobile Framework for Cryptographic Image Provenance and {AI} Detection},
-  year          = {2026},
-  eprint        = {2602.03423},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.CR},
-  note          = {Accepted at the FIIR workshop, The Web Conference 2026; the workshop was subsequently cancelled}
+    author        = {Loth, Alexander and Rosario, Dominique Conceicao and
+                     Ebinger, Peter and Kappes, Martin and Pahl, Marc-Oliver},
+    title         = {Origin Lens: {A} Privacy-First Mobile Framework for
+                     Cryptographic Image Provenance and {AI} Detection},
+    year          = {2026},
+    eprint        = {2602.03423},
+    archivePrefix = {arXiv},
+    primaryClass  = {cs.CR},
+    note          = {Accepted at the FIIR workshop, The Web Conference 2026;
+                     the workshop was subsequently cancelled}
 }
 ```
 

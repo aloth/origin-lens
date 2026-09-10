@@ -21,6 +21,10 @@ url: "https://github.com/aloth/origin-lens"
 version: "1.2.0"
 date-released: "2026-09-09"
 license: GPL-3.0
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22303807"
+    description: "Concept DOI, resolves to the latest archived version"
 references:
   - type: article
     title: >
