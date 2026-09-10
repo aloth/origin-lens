@@ -162,6 +162,15 @@ Help make Origin Lens better:
 
 Origin Lens is part of a broader research initiative investigating the intersection of generative AI and misinformation. We invite researchers, practitioners, and policymakers to explore our related work and contribute to advancing this critical field.
 
+### Publications
+
+Two papers describe this work:
+
+- **WebSci '26** — *Origin Lens: Reclaiming Trust on the AI-Mediated Web Through On-Device Image Provenance Verification.* 18th ACM Web Science Conference, Braunschweig. [doi:10.1145/3795513.3806658](https://doi.org/10.1145/3795513.3806658)
+- **Preprint** — *Origin Lens: A Privacy-First Mobile Framework for Cryptographic Image Provenance and AI Detection.* [arXiv:2602.03423](https://arxiv.org/abs/2602.03423). Accepted at the FIIR workshop of The Web Conference 2026; that workshop was subsequently cancelled, so this one exists as a preprint only.
+
+The first is the one to cite.
+
 ### How to Cite
 
 If you use Origin Lens or its underlying research in your work, please cite our paper:

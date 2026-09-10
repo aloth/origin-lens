@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  rust:
+    name: Rust tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src/rust_builder/rust/target
+          key: cargo-${{ hashFiles('src/rust_builder/rust/Cargo.lock') }}
+
+      # The fixtures are vendored, so these tests do not reach the network.
+      - name: Test
+        working-directory: src/rust_builder/rust
+        run: cargo test --verbose
+
+  flutter:
+    name: Flutter analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        working-directory: src
+        run: flutter pub get
+
+      # Warnings and lints are reported but do not fail the build; only real
+      # analyzer errors do.
+      - name: Analyze
+        working-directory: src
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
