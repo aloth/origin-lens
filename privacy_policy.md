@@ -1,6 +1,6 @@
 # Privacy Policy for Origin Lens
 
-**Effective Date:** September 10, 2026
+**Effective Date:** September 11, 2026
 
 At Origin Lens ("we," "us," or "our"), operated by Alexander Loth and Dominique Conceicao Rosario, we are committed to protecting your privacy. This Privacy Policy explains our practices regarding the collection, use, and disclosure of information when you use our mobile application, Origin Lens ("App").
 
@@ -12,12 +12,13 @@ Origin Lens is a privacy-first media verification utility. We do not collect, st
 
 The App's core verification – C2PA Content Credentials, cryptographic signature checks, asset-binding checks and EXIF metadata parsing – runs entirely on your device.
 
-Two optional features send an image to a third-party service. **Both ask for your confirmation before anything leaves your device**, and both can be declined:
+Three optional features make a network request, and **each asks for your confirmation first**. They are not alike, and the difference matters:
 
-- **AI assessment** – offered when an image carries no Content Credentials.
-- **Reverse image search** – offered when you tap "Check Online Context".
+- **AI assessment** – offered when an image carries no Content Credentials. **Sends the image.**
+- **Reverse image search** – offered when you tap "Check Online Context". **Sends the image.**
+- **Remote credential fetch** – offered when an image states that its Content Credentials are held at another address. **Does not send the image.** It asks that address for the credentials.
 
-These are the only paths on which an image you analyze leaves your device. They are described in Section 3.
+The first two are the only paths on which an image you analyze leaves your device. All three are described in Section 3.
 
 ## 2. Information We Do Not Collect
 
@@ -64,6 +65,19 @@ These services have their own privacy policies:
 
 Images sent for reverse search are used to perform that search and are subject to those services' retention policies. Where the App requests a short expiry for a hosted image, that request is made to the host; we cannot verify deletion on your behalf.
 
+### Remote Credential Fetch (Optional, Address Chosen by the Image)
+
+Some images carry no Content Credentials themselves and instead state, in their metadata, that their credentials are held at a web address. The App can request them from that address. **Your image is not sent on this path.**
+
+- **What is sent:** a request for the credential file at the address named in the image. No part of the image is transmitted, and nothing is uploaded.
+- **Where it goes:** to whatever address the image names. We cannot list it in advance, because it is chosen by the image you analyze, not by us. The App shows you the host and asks before making the request.
+- **When:** only after you confirm this address in a dialog. You may decline. You may also choose to allow one specific host without being asked again for that host; that choice covers only the host you approved and does not extend to any other address or to the two features above.
+- **What is revealed:** your IP address, and the fact that these particular credentials were requested. An address that receives such a request learns that someone at your IP address examined an image referring to it.
+- **What comes back:** the credential file. It is then verified on your device against the image you are analyzing. Credentials that do not match the image fail verification rather than being accepted, so an address cannot vouch for an image by serving credentials belonging to a different one.
+- **Limits we apply:** the request is made over HTTPS only and is refused for an unencrypted address rather than being silently upgraded, redirects that would downgrade to an unencrypted connection are refused, and the response is subject to a time limit and a size limit.
+
+Earlier versions of the App performed this request automatically, without asking, as part of reading an image. That is no longer the case.
+
 ## 4. Third-Party Services
 
 The App contacts these services, and only for the optional features described above:
@@ -72,6 +86,8 @@ The App contacts these services, and only for the optional features described ab
 - **SerpAPI** (serpapi.com) – reverse image search across Google, Bing, and Yandex
 - **imgbb** (imgbb.com) – temporary image hosting, used to give a local image a URL for reverse search
 - **Search engines directly** (Google, Bing, Yandex) – reverse image search when SerpAPI is not configured
+
+One destination cannot be listed here: the address contacted by the remote credential fetch described in Section 3. That address is named by the image being analyzed, so it differs from image to image and is not known to us in advance. The App shows you the host and asks for your confirmation before contacting it, which is the only point at which that address can be known. Any such address is a third party whose own privacy practices apply to the request, and we have no relationship with it.
 
 The App ships with default API keys so these features work without setup. You can replace them with your own keys in Settings. Removing a key you supplied returns the App to its default key rather than disabling the feature.
 
