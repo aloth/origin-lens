@@ -8,7 +8,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'c2pa_reader.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `cbor_to_json`, `check_json_for_ai_indicators`, `classify_validation_status`, `detect_ai_generation`, `error`, `extract_cert_field`, `extract_generator_from_json`, `extract_model_name`, `no_manifest_with_exif`, `no_manifest`, `parse_exif_from_bytes`, `parse_exif_from_file`, `parse_manifest_reader`, `software_agent_to_string`
+// These functions are ignored because they are not marked as `pub`: `cbor_to_json`, `check_json_for_ai_indicators`, `classify_validation_status`, `detect_ai_generation`, `detect_watermark_declaration`, `error`, `extract_cert_field`, `extract_generator_from_json`, `extract_model_name`, `merge_exif`, `no_manifest_with_exif`, `no_manifest`, `parse_exif_from_bytes`, `parse_exif_from_file`, `parse_manifest_reader`, `remote_manifest_pending`, `result_for_read_error`, `software_agent_to_string`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Analyzes a file at the given path for C2PA metadata
@@ -28,6 +28,42 @@ C2paAnalysisResult analyzeC2PaFromBytes({
 
 Future<String> c2PaSdkVersion() =>
     RustLib.instance.api.crateApiC2PaReaderC2PaSdkVersion();
+
+/// Fetch a remote C2PA manifest and verify it against the image.
+///
+/// Called only after the user has approved this specific URL. Nothing in the
+/// analysis path reaches it on its own: `analyze_c2pa_from_bytes` and
+/// `analyze_c2pa_from_path` report `RemoteManifestPending` and stop.
+///
+/// The image is not uploaded. The request asks a host for a manifest and sends
+/// nothing of the image with it, so what the host learns is the requesting IP
+/// address and which manifest was asked for.
+///
+/// Rules enforced here rather than delegated:
+///
+/// * **https only.** A plain-http URL is rejected and is never silently
+///   promoted to https: upgrading it would answer a question the user was
+///   shown with a different request than the one they approved. c2pa-rs
+///   accepts both schemes in `is_valid_remote_url`, so this is a narrowing.
+/// * **No downgrade through a redirect.** `https_only` is checked on every
+///   hop in ureq, so an https URL that redirects to http fails instead of
+///   proceeding.
+/// * **A size limit and a timeout**, both explicit, see the constants above.
+///
+/// The returned manifest is not trusted on arrival. It is verified against
+/// `image_data` through `Reader::from_manifest_data_and_stream`, which binds
+/// the claim's hashes to these exact bytes: a host that serves a valid
+/// manifest for a different image produces a validation failure, not a
+/// verified result.
+Future<C2paAnalysisResult> fetchRemoteManifest({
+  required String url,
+  required List<int> imageData,
+  required String mimeType,
+}) => RustLib.instance.api.crateApiC2PaReaderFetchRemoteManifest(
+  url: url,
+  imageData: imageData,
+  mimeType: mimeType,
+);
 
 /// Check if the native library is properly loaded
 bool isC2PaAvailable() =>
@@ -280,6 +316,19 @@ sealed class VerificationStatus with _$VerificationStatus {
   const factory VerificationStatus.certificateUntrusted() =
       VerificationStatus_CertificateUntrusted;
   const factory VerificationStatus.noManifest() = VerificationStatus_NoManifest;
+
+  /// The image carries no embedded manifest, but its XMP names a remote one
+  /// through `dcterms:provenance`, and that manifest has **not** been
+  /// fetched.
+  ///
+  /// This is a third state, distinct from both "manifest present" and "no
+  /// manifest": something exists to verify, it simply lives elsewhere and
+  /// reaching it costs a network request to a host the image chose. Carrying
+  /// the URL up to the caller instead of resolving it here is what makes the
+  /// request answerable by a human before it happens.
+  const factory VerificationStatus.remoteManifestPending({
+    required String url,
+  }) = VerificationStatus_RemoteManifestPending;
   const factory VerificationStatus.error({required String message}) =
       VerificationStatus_Error;
 }

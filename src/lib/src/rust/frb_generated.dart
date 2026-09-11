@@ -64,7 +64,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => 102767085;
+  int get rustContentHash => -1473992825;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -85,6 +85,12 @@ abstract class RustLibApi extends BaseApi {
   });
 
   Future<String> crateApiC2PaReaderC2PaSdkVersion();
+
+  Future<C2paAnalysisResult> crateApiC2PaReaderFetchRemoteManifest({
+    required String url,
+    required List<int> imageData,
+    required String mimeType,
+  });
 
   bool crateApiC2PaReaderIsC2PaAvailable();
 }
@@ -183,12 +189,49 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "c2pa_sdk_version", argNames: []);
 
   @override
+  Future<C2paAnalysisResult> crateApiC2PaReaderFetchRemoteManifest({
+    required String url,
+    required List<int> imageData,
+    required String mimeType,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(url, serializer);
+          sse_encode_list_prim_u_8_loose(imageData, serializer);
+          sse_encode_String(mimeType, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_c_2_pa_analysis_result,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiC2PaReaderFetchRemoteManifestConstMeta,
+        argValues: [url, imageData, mimeType],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiC2PaReaderFetchRemoteManifestConstMeta =>
+      const TaskConstMeta(
+        debugName: "fetch_remote_manifest",
+        argNames: ["url", "imageData", "mimeType"],
+      );
+
+  @override
   bool crateApiC2PaReaderIsC2PaAvailable() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -389,6 +432,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 4:
         return VerificationStatus_NoManifest();
       case 5:
+        return VerificationStatus_RemoteManifestPending(
+          url: dco_decode_String(raw[1]),
+        );
+      case 6:
         return VerificationStatus_Error(message: dco_decode_String(raw[1]));
       default:
         throw Exception("unreachable");
@@ -639,6 +686,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 4:
         return VerificationStatus_NoManifest();
       case 5:
+        var var_url = sse_decode_String(deserializer);
+        return VerificationStatus_RemoteManifestPending(url: var_url);
+      case 6:
         var var_message = sse_decode_String(deserializer);
         return VerificationStatus_Error(message: var_message);
       default:
@@ -863,8 +913,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(3, serializer);
       case VerificationStatus_NoManifest():
         sse_encode_i_32(4, serializer);
-      case VerificationStatus_Error(message: final message):
+      case VerificationStatus_RemoteManifestPending(url: final url):
         sse_encode_i_32(5, serializer);
+        sse_encode_String(url, serializer);
+      case VerificationStatus_Error(message: final message):
+        sse_encode_i_32(6, serializer);
         sse_encode_String(message, serializer);
     }
   }

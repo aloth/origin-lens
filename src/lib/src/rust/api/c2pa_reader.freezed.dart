@@ -24,6 +24,7 @@ mixin _$VerificationStatus {
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
     required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -33,6 +34,7 @@ mixin _$VerificationStatus {
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
     TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -42,6 +44,7 @@ mixin _$VerificationStatus {
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
     TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -55,6 +58,8 @@ mixin _$VerificationStatus {
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
     required TResult Function(VerificationStatus_Error value) error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -67,6 +72,8 @@ mixin _$VerificationStatus {
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult? Function(VerificationStatus_Error value)? error,
   }) => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -79,6 +86,8 @@ mixin _$VerificationStatus {
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult Function(VerificationStatus_Error value)? error,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
@@ -159,6 +168,7 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
     required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
   }) {
     return verified();
@@ -172,6 +182,7 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
     TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
   }) {
     return verified?.call();
@@ -185,6 +196,7 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
     TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -205,6 +217,8 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
     required TResult Function(VerificationStatus_Error value) error,
   }) {
     return verified(this);
@@ -221,6 +235,8 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult? Function(VerificationStatus_Error value)? error,
   }) {
     return verified?.call(this);
@@ -237,6 +253,8 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult Function(VerificationStatus_Error value)? error,
     required TResult orElse(),
   }) {
@@ -307,6 +325,7 @@ class _$VerificationStatus_SignatureInvalidImpl
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
     required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
   }) {
     return signatureInvalid();
@@ -320,6 +339,7 @@ class _$VerificationStatus_SignatureInvalidImpl
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
     TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
   }) {
     return signatureInvalid?.call();
@@ -333,6 +353,7 @@ class _$VerificationStatus_SignatureInvalidImpl
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
     TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -353,6 +374,8 @@ class _$VerificationStatus_SignatureInvalidImpl
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
     required TResult Function(VerificationStatus_Error value) error,
   }) {
     return signatureInvalid(this);
@@ -369,6 +392,8 @@ class _$VerificationStatus_SignatureInvalidImpl
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult? Function(VerificationStatus_Error value)? error,
   }) {
     return signatureInvalid?.call(this);
@@ -385,6 +410,8 @@ class _$VerificationStatus_SignatureInvalidImpl
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult Function(VerificationStatus_Error value)? error,
     required TResult orElse(),
   }) {
@@ -455,6 +482,7 @@ class _$VerificationStatus_CertificateExpiredImpl
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
     required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
   }) {
     return certificateExpired();
@@ -468,6 +496,7 @@ class _$VerificationStatus_CertificateExpiredImpl
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
     TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
   }) {
     return certificateExpired?.call();
@@ -481,6 +510,7 @@ class _$VerificationStatus_CertificateExpiredImpl
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
     TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -501,6 +531,8 @@ class _$VerificationStatus_CertificateExpiredImpl
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
     required TResult Function(VerificationStatus_Error value) error,
   }) {
     return certificateExpired(this);
@@ -517,6 +549,8 @@ class _$VerificationStatus_CertificateExpiredImpl
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult? Function(VerificationStatus_Error value)? error,
   }) {
     return certificateExpired?.call(this);
@@ -533,6 +567,8 @@ class _$VerificationStatus_CertificateExpiredImpl
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult Function(VerificationStatus_Error value)? error,
     required TResult orElse(),
   }) {
@@ -604,6 +640,7 @@ class _$VerificationStatus_CertificateUntrustedImpl
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
     required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
   }) {
     return certificateUntrusted();
@@ -617,6 +654,7 @@ class _$VerificationStatus_CertificateUntrustedImpl
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
     TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
   }) {
     return certificateUntrusted?.call();
@@ -630,6 +668,7 @@ class _$VerificationStatus_CertificateUntrustedImpl
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
     TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -650,6 +689,8 @@ class _$VerificationStatus_CertificateUntrustedImpl
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
     required TResult Function(VerificationStatus_Error value) error,
   }) {
     return certificateUntrusted(this);
@@ -666,6 +707,8 @@ class _$VerificationStatus_CertificateUntrustedImpl
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult? Function(VerificationStatus_Error value)? error,
   }) {
     return certificateUntrusted?.call(this);
@@ -682,6 +725,8 @@ class _$VerificationStatus_CertificateUntrustedImpl
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult Function(VerificationStatus_Error value)? error,
     required TResult orElse(),
   }) {
@@ -753,6 +798,7 @@ class _$VerificationStatus_NoManifestImpl
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
     required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
   }) {
     return noManifest();
@@ -766,6 +812,7 @@ class _$VerificationStatus_NoManifestImpl
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
     TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
   }) {
     return noManifest?.call();
@@ -779,6 +826,7 @@ class _$VerificationStatus_NoManifestImpl
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
     TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -799,6 +847,8 @@ class _$VerificationStatus_NoManifestImpl
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
     required TResult Function(VerificationStatus_Error value) error,
   }) {
     return noManifest(this);
@@ -815,6 +865,8 @@ class _$VerificationStatus_NoManifestImpl
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult? Function(VerificationStatus_Error value)? error,
   }) {
     return noManifest?.call(this);
@@ -831,6 +883,8 @@ class _$VerificationStatus_NoManifestImpl
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult Function(VerificationStatus_Error value)? error,
     required TResult orElse(),
   }) {
@@ -845,6 +899,207 @@ abstract class VerificationStatus_NoManifest extends VerificationStatus {
   const factory VerificationStatus_NoManifest() =
       _$VerificationStatus_NoManifestImpl;
   const VerificationStatus_NoManifest._() : super._();
+}
+
+/// @nodoc
+abstract class _$$VerificationStatus_RemoteManifestPendingImplCopyWith<$Res> {
+  factory _$$VerificationStatus_RemoteManifestPendingImplCopyWith(
+    _$VerificationStatus_RemoteManifestPendingImpl value,
+    $Res Function(_$VerificationStatus_RemoteManifestPendingImpl) then,
+  ) = __$$VerificationStatus_RemoteManifestPendingImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String url});
+}
+
+/// @nodoc
+class __$$VerificationStatus_RemoteManifestPendingImplCopyWithImpl<$Res>
+    extends
+        _$VerificationStatusCopyWithImpl<
+          $Res,
+          _$VerificationStatus_RemoteManifestPendingImpl
+        >
+    implements _$$VerificationStatus_RemoteManifestPendingImplCopyWith<$Res> {
+  __$$VerificationStatus_RemoteManifestPendingImplCopyWithImpl(
+    _$VerificationStatus_RemoteManifestPendingImpl _value,
+    $Res Function(_$VerificationStatus_RemoteManifestPendingImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of VerificationStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? url = null}) {
+    return _then(
+      _$VerificationStatus_RemoteManifestPendingImpl(
+        url: null == url
+            ? _value.url
+            : url // ignore: cast_nullable_to_non_nullable
+                  as String,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$VerificationStatus_RemoteManifestPendingImpl
+    extends VerificationStatus_RemoteManifestPending {
+  const _$VerificationStatus_RemoteManifestPendingImpl({required this.url})
+    : super._();
+
+  @override
+  final String url;
+
+  @override
+  String toString() {
+    return 'VerificationStatus.remoteManifestPending(url: $url)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$VerificationStatus_RemoteManifestPendingImpl &&
+            (identical(other.url, url) || other.url == url));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, url);
+
+  /// Create a copy of VerificationStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$VerificationStatus_RemoteManifestPendingImplCopyWith<
+    _$VerificationStatus_RemoteManifestPendingImpl
+  >
+  get copyWith =>
+      __$$VerificationStatus_RemoteManifestPendingImplCopyWithImpl<
+        _$VerificationStatus_RemoteManifestPendingImpl
+      >(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() verified,
+    required TResult Function() signatureInvalid,
+    required TResult Function() certificateExpired,
+    required TResult Function() certificateUntrusted,
+    required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
+    required TResult Function(String message) error,
+  }) {
+    return remoteManifestPending(url);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? verified,
+    TResult? Function()? signatureInvalid,
+    TResult? Function()? certificateExpired,
+    TResult? Function()? certificateUntrusted,
+    TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
+    TResult? Function(String message)? error,
+  }) {
+    return remoteManifestPending?.call(url);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? verified,
+    TResult Function()? signatureInvalid,
+    TResult Function()? certificateExpired,
+    TResult Function()? certificateUntrusted,
+    TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
+    TResult Function(String message)? error,
+    required TResult orElse(),
+  }) {
+    if (remoteManifestPending != null) {
+      return remoteManifestPending(url);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(VerificationStatus_Verified value) verified,
+    required TResult Function(VerificationStatus_SignatureInvalid value)
+    signatureInvalid,
+    required TResult Function(VerificationStatus_CertificateExpired value)
+    certificateExpired,
+    required TResult Function(VerificationStatus_CertificateUntrusted value)
+    certificateUntrusted,
+    required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
+    required TResult Function(VerificationStatus_Error value) error,
+  }) {
+    return remoteManifestPending(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(VerificationStatus_Verified value)? verified,
+    TResult? Function(VerificationStatus_SignatureInvalid value)?
+    signatureInvalid,
+    TResult? Function(VerificationStatus_CertificateExpired value)?
+    certificateExpired,
+    TResult? Function(VerificationStatus_CertificateUntrusted value)?
+    certificateUntrusted,
+    TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
+    TResult? Function(VerificationStatus_Error value)? error,
+  }) {
+    return remoteManifestPending?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(VerificationStatus_Verified value)? verified,
+    TResult Function(VerificationStatus_SignatureInvalid value)?
+    signatureInvalid,
+    TResult Function(VerificationStatus_CertificateExpired value)?
+    certificateExpired,
+    TResult Function(VerificationStatus_CertificateUntrusted value)?
+    certificateUntrusted,
+    TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
+    TResult Function(VerificationStatus_Error value)? error,
+    required TResult orElse(),
+  }) {
+    if (remoteManifestPending != null) {
+      return remoteManifestPending(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class VerificationStatus_RemoteManifestPending
+    extends VerificationStatus {
+  const factory VerificationStatus_RemoteManifestPending({
+    required final String url,
+  }) = _$VerificationStatus_RemoteManifestPendingImpl;
+  const VerificationStatus_RemoteManifestPending._() : super._();
+
+  String get url;
+
+  /// Create a copy of VerificationStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$VerificationStatus_RemoteManifestPendingImplCopyWith<
+    _$VerificationStatus_RemoteManifestPendingImpl
+  >
+  get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -926,6 +1181,7 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
     required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
   }) {
     return error(message);
@@ -939,6 +1195,7 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
     TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
   }) {
     return error?.call(message);
@@ -952,6 +1209,7 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
     TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
     required TResult orElse(),
   }) {
@@ -972,6 +1230,8 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
     required TResult Function(VerificationStatus_Error value) error,
   }) {
     return error(this);
@@ -988,6 +1248,8 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult? Function(VerificationStatus_Error value)? error,
   }) {
     return error?.call(this);
@@ -1004,6 +1266,8 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
     TResult Function(VerificationStatus_Error value)? error,
     required TResult orElse(),
   }) {

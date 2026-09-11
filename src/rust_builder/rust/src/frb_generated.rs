@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 102767085;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1473992825;
 
 // Section: executor
 
@@ -137,6 +137,46 @@ fn wire__crate__api__c2pa_reader__c2pa_sdk_version_impl(
                 transform_result_sse::<_, ()>((move || {
                     let output_ok =
                         Result::<_, ()>::Ok(crate::api::c2pa_reader::c2pa_sdk_version())?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__c2pa_reader__fetch_remote_manifest_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "fetch_remote_manifest",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_url = <String>::sse_decode(&mut deserializer);
+            let api_image_data = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_mime_type = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok =
+                        Result::<_, ()>::Ok(crate::api::c2pa_reader::fetch_remote_manifest(
+                            api_url,
+                            api_image_data,
+                            api_mime_type,
+                        ))?;
                     Ok(output_ok)
                 })())
             }
@@ -413,6 +453,12 @@ impl SseDecode for crate::api::c2pa_reader::VerificationStatus {
                 return crate::api::c2pa_reader::VerificationStatus::NoManifest;
             }
             5 => {
+                let mut var_url = <String>::sse_decode(deserializer);
+                return crate::api::c2pa_reader::VerificationStatus::RemoteManifestPending {
+                    url: var_url,
+                };
+            }
+            6 => {
                 let mut var_message = <String>::sse_decode(deserializer);
                 return crate::api::c2pa_reader::VerificationStatus::Error {
                     message: var_message,
@@ -444,6 +490,12 @@ fn pde_ffi_dispatcher_primary_impl(
         3 => {
             wire__crate__api__c2pa_reader__c2pa_sdk_version_impl(port, ptr, rust_vec_len, data_len)
         }
+        4 => wire__crate__api__c2pa_reader__fetch_remote_manifest_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
         _ => unreachable!(),
     }
 }
@@ -462,7 +514,7 @@ fn pde_ffi_dispatcher_sync_impl(
         2 => {
             wire__crate__api__c2pa_reader__analyze_c2pa_from_path_impl(ptr, rust_vec_len, data_len)
         }
-        4 => wire__crate__api__c2pa_reader__is_c2pa_available_impl(ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__c2pa_reader__is_c2pa_available_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -615,8 +667,11 @@ impl flutter_rust_bridge::IntoDart for crate::api::c2pa_reader::VerificationStat
                 [3.into_dart()].into_dart()
             }
             crate::api::c2pa_reader::VerificationStatus::NoManifest => [4.into_dart()].into_dart(),
+            crate::api::c2pa_reader::VerificationStatus::RemoteManifestPending { url } => {
+                [5.into_dart(), url.into_into_dart().into_dart()].into_dart()
+            }
             crate::api::c2pa_reader::VerificationStatus::Error { message } => {
-                [5.into_dart(), message.into_into_dart().into_dart()].into_dart()
+                [6.into_dart(), message.into_into_dart().into_dart()].into_dart()
             }
             _ => {
                 unimplemented!("");
@@ -807,8 +862,12 @@ impl SseEncode for crate::api::c2pa_reader::VerificationStatus {
             crate::api::c2pa_reader::VerificationStatus::NoManifest => {
                 <i32>::sse_encode(4, serializer);
             }
-            crate::api::c2pa_reader::VerificationStatus::Error { message } => {
+            crate::api::c2pa_reader::VerificationStatus::RemoteManifestPending { url } => {
                 <i32>::sse_encode(5, serializer);
+                <String>::sse_encode(url, serializer);
+            }
+            crate::api::c2pa_reader::VerificationStatus::Error { message } => {
+                <i32>::sse_encode(6, serializer);
                 <String>::sse_encode(message, serializer);
             }
             _ => {
