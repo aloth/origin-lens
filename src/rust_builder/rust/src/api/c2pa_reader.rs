@@ -3,7 +3,7 @@ use flutter_rust_bridge::frb;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs::File;
-use std::io::{BufReader, Seek, SeekFrom};
+use std::io::{BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 use exif::{In, Tag};
 
@@ -160,6 +160,16 @@ pub enum VerificationStatus {
     CertificateExpired,
     CertificateUntrusted,
     NoManifest,
+    /// The image carries no embedded manifest, but its XMP names a remote one
+    /// through `dcterms:provenance`, and that manifest has **not** been
+    /// fetched.
+    ///
+    /// This is a third state, distinct from both "manifest present" and "no
+    /// manifest": something exists to verify, it simply lives elsewhere and
+    /// reaching it costs a network request to a host the image chose. Carrying
+    /// the URL up to the caller instead of resolving it here is what makes the
+    /// request answerable by a human before it happens.
+    RemoteManifestPending { url: String },
     Error { message: String },
 }
 
@@ -288,6 +298,53 @@ impl C2paAnalysisResult {
             raw_manifest_json: None,
         }
     }
+
+    /// An image whose manifest lives at `url` and has not been fetched.
+    fn remote_manifest_pending(url: String) -> Self {
+        C2paAnalysisResult {
+            status: VerificationStatus::RemoteManifestPending { url },
+            signer: None,
+            actions: vec![],
+            ai_info: None,
+            exif_info: None,
+            claim_generator: None,
+            title: None,
+            format: None,
+            instance_id: None,
+            raw_manifest_json: None,
+        }
+    }
+}
+
+/// Fold EXIF findings into an analysis result.
+///
+/// EXIF is read on every path, including the ones where C2PA parsing failed,
+/// because it is local and costs nothing. When both sources see an AI
+/// generator the detection source becomes "both"; when only EXIF does, it
+/// becomes the sole source.
+fn merge_exif(result: &mut C2paAnalysisResult, exif: ExifInfo) {
+    if exif.ai_detected {
+        match result.ai_info.as_mut() {
+            Some(ai_info) => {
+                if ai_info.detection_source == Some("c2pa".to_string()) {
+                    ai_info.detection_source = Some("both".to_string());
+                }
+                if ai_info.generator_name.is_none() {
+                    ai_info.generator_name = exif.ai_generator.clone();
+                }
+            }
+            None => {
+                result.ai_info = Some(AiInfo {
+                    is_ai_generated: true,
+                    generator_name: exif.ai_generator.clone(),
+                    model_name: None,
+                    detection_source: Some("exif".to_string()),
+                    watermark_declared: false,
+                });
+            }
+        }
+    }
+    result.exif_info = Some(exif);
 }
 
 /// Parse EXIF metadata from a file and detect AI generators
@@ -520,232 +577,81 @@ pub fn analyze_c2pa_from_path(file_path: String) -> C2paAnalysisResult {
     match Reader::from_stream(format, reader) {
         Ok(manifest_reader) => {
             let mut result = parse_manifest_reader(&manifest_reader);
-            // Also parse EXIF and merge AI detection
             if let Some(exif_info) = parse_exif_from_file(path) {
-                // Merge EXIF AI detection with C2PA AI detection
-                if exif_info.ai_detected {
-                    if let Some(ref mut ai_info) = result.ai_info {
-                        // Already detected via C2PA, add EXIF as secondary source
-                        if ai_info.detection_source == Some("c2pa".to_string()) {
-                            ai_info.detection_source = Some("both".to_string());
-                        }
-                        if ai_info.generator_name.is_none() {
-                            ai_info.generator_name = exif_info.ai_generator.clone();
-                        }
-                    } else {
-                        // Not detected via C2PA, use EXIF detection
-                        result.ai_info = Some(AiInfo {
-                            is_ai_generated: true,
-                            generator_name: exif_info.ai_generator.clone(),
-                            model_name: None,
-                            detection_source: Some("exif".to_string()),
-                            watermark_declared: false,
-                        });
-                    }
-                }
-                result.exif_info = Some(exif_info);
+                merge_exif(&mut result, exif_info);
             }
             result
         }
-        Err(e) => {
-            let error_msg = e.to_string().to_lowercase();
-            // Check for various "no manifest" conditions
-            if error_msg.contains("not found")
-                || error_msg.contains("jumbfnotfound")
-                || error_msg.contains("no manifest")
-                || error_msg.contains("jumbf")
-            {
-                // No C2PA manifest, but still parse EXIF
-                if let Some(exif_info) = parse_exif_from_file(path) {
-                    C2paAnalysisResult::no_manifest_with_exif(exif_info)
-                } else {
-                    C2paAnalysisResult::no_manifest()
-                }
-            } 
-            // CBOR parsing errors often mean corrupted or incompatible manifest
-            else if error_msg.contains("cbor") 
-                || error_msg.contains("claim could not be")
-                || error_msg.contains("deserialization")
-                || error_msg.contains("invalid")
-            {
-                // Parse EXIF even on C2PA error
-                let exif_info = parse_exif_from_file(path);
-                C2paAnalysisResult {
-                    status: VerificationStatus::Error { 
-                        message: "This image contains C2PA data that could not be parsed. It may be corrupted or use an unsupported format.".to_string() 
-                    },
-                    signer: None,
-                    actions: vec![],
-                    ai_info: exif_info.as_ref().filter(|e| e.ai_detected).map(|e| AiInfo {
-                        is_ai_generated: true,
-                        generator_name: e.ai_generator.clone(),
-                        model_name: None,
-                        detection_source: Some("exif".to_string()),
-                        watermark_declared: false,
-                    }),
-                    exif_info,
-                    claim_generator: None,
-                    title: None,
-                    format: None,
-                    instance_id: None,
-                    raw_manifest_json: None,
-                }
-            }
-            else {
-                C2paAnalysisResult::error(e.to_string())
-            }
-        }
+        Err(e) => result_for_read_error(e, parse_exif_from_file(path)),
     }
 }
 
 /// Analyzes raw bytes for C2PA metadata
 #[frb(sync)]
 pub fn analyze_c2pa_from_bytes(data: Vec<u8>, mime_type: String) -> C2paAnalysisResult {
-    let data_clone = data.clone();
-    
-    // First try synchronous parsing
     let cursor = std::io::Cursor::new(data.clone());
     match Reader::from_stream(&mime_type, cursor) {
         Ok(manifest_reader) => {
             let mut result = parse_manifest_reader(&manifest_reader);
-            // Also parse EXIF and merge AI detection
-            if let Some(exif_info) = parse_exif_from_bytes(&data_clone) {
-                // Merge EXIF AI detection with C2PA AI detection
-                if exif_info.ai_detected {
-                    if let Some(ref mut ai_info) = result.ai_info {
-                        // Already detected via C2PA, add EXIF as secondary source
-                        if ai_info.detection_source == Some("c2pa".to_string()) {
-                            ai_info.detection_source = Some("both".to_string());
-                        }
-                        if ai_info.generator_name.is_none() {
-                            ai_info.generator_name = exif_info.ai_generator.clone();
-                        }
-                    } else {
-                        // Not detected via C2PA, use EXIF detection
-                        result.ai_info = Some(AiInfo {
-                            is_ai_generated: true,
-                            generator_name: exif_info.ai_generator.clone(),
-                            model_name: None,
-                            detection_source: Some("exif".to_string()),
-                            watermark_declared: false,
-                        });
-                    }
-                }
-                result.exif_info = Some(exif_info);
+            if let Some(exif_info) = parse_exif_from_bytes(&data) {
+                merge_exif(&mut result, exif_info);
             }
             result
         }
-        Err(e) => {
-            let error_msg = e.to_string().to_lowercase();
-            
-            // Check if remote manifest fetching is needed
-            if error_msg.contains("remote manifest") || error_msg.contains("fetch") {
-                // Try async version which supports remote manifest fetching
-                // Create a tokio runtime for async operations
-                match tokio::runtime::Runtime::new() {
-                    Ok(rt) => {
-                        let data_for_async = data.clone();
-                        let mime_for_async = mime_type.clone();
-                        let result = rt.block_on(async {
-                            let cursor = std::io::Cursor::new(data_for_async);
-                            match Reader::from_stream_async(&mime_for_async, cursor).await {
-                                Ok(manifest_reader) => {
-                                    let mut result = parse_manifest_reader(&manifest_reader);
-                                    if let Some(exif_info) = parse_exif_from_bytes(&data_clone) {
-                                        if exif_info.ai_detected {
-                                            if let Some(ref mut ai_info) = result.ai_info {
-                                                if ai_info.detection_source == Some("c2pa".to_string()) {
-                                                    ai_info.detection_source = Some("both".to_string());
-                                                }
-                                                if ai_info.generator_name.is_none() {
-                                                    ai_info.generator_name = exif_info.ai_generator.clone();
-                                                }
-                                            } else {
-                                                result.ai_info = Some(AiInfo {
-                                                    is_ai_generated: true,
-                                                    generator_name: exif_info.ai_generator.clone(),
-                                                    model_name: None,
-                                                    detection_source: Some("exif".to_string()),
-                                                    watermark_declared: false,
-                                                });
-                                            }
-                                        }
-                                        result.exif_info = Some(exif_info);
-                                    }
-                                    result
-                                }
-                                Err(async_e) => {
-                                    let async_error_msg = async_e.to_string().to_lowercase();
-                                    if async_error_msg.contains("not found")
-                                        || async_error_msg.contains("jumbfnotfound")
-                                        || async_error_msg.contains("no manifest")
-                                        || async_error_msg.contains("jumbf")
-                                    {
-                                        if let Some(exif_info) = parse_exif_from_bytes(&data_clone) {
-                                            C2paAnalysisResult::no_manifest_with_exif(exif_info)
-                                        } else {
-                                            C2paAnalysisResult::no_manifest()
-                                        }
-                                    } else {
-                                        C2paAnalysisResult::error(async_e.to_string())
-                                    }
-                                }
-                            }
-                        });
-                        return result;
-                    }
-                    Err(rt_e) => {
-                        return C2paAnalysisResult::error(format!("Failed to create async runtime: {}", rt_e));
-                    }
-                }
-            }
-            
-            // Check for various "no manifest" conditions
-            if error_msg.contains("not found")
-                || error_msg.contains("jumbfnotfound")
-                || error_msg.contains("no manifest")
-                || error_msg.contains("jumbf")
-            {
-                // No C2PA manifest, but still parse EXIF
-                if let Some(exif_info) = parse_exif_from_bytes(&data_clone) {
-                    C2paAnalysisResult::no_manifest_with_exif(exif_info)
-                } else {
-                    C2paAnalysisResult::no_manifest()
-                }
-            } 
-            // CBOR parsing errors often mean corrupted or incompatible manifest
-            else if error_msg.contains("cbor") 
-                || error_msg.contains("claim could not be")
-                || error_msg.contains("deserialization")
-                || error_msg.contains("invalid")
-            {
-                // Parse EXIF even on C2PA error
-                let exif_info = parse_exif_from_bytes(&data_clone);
-                C2paAnalysisResult {
-                    status: VerificationStatus::Error { 
-                        message: "This image contains C2PA data that could not be parsed. It may be corrupted or use an unsupported format.".to_string() 
-                    },
-                    signer: None,
-                    actions: vec![],
-                    ai_info: exif_info.as_ref().filter(|e| e.ai_detected).map(|e| AiInfo {
-                        is_ai_generated: true,
-                        generator_name: e.ai_generator.clone(),
-                        model_name: None,
-                        detection_source: Some("exif".to_string()),
-                        watermark_declared: false,
-                    }),
-                    exif_info,
-                    claim_generator: None,
-                    title: None,
-                    format: None,
-                    instance_id: None,
-                    raw_manifest_json: None,
-                }
-            }
-            else {
-                C2paAnalysisResult::error(e.to_string())
-            }
+        Err(e) => result_for_read_error(e, parse_exif_from_bytes(&data)),
+    }
+}
+
+/// Turn a failed `Reader::from_stream` into a result, with EXIF folded in.
+///
+/// The `RemoteManifestUrl` arm is the reason this is matched on the error
+/// value rather than on its message. That variant is only produced when the
+/// `fetch_remote_manifests` feature is off: with the feature on, the library
+/// resolves the URL itself and this arm is unreachable. Matching the variant
+/// means a future re-enabling of the feature would silently lose the prompt
+/// rather than mis-parse a string, and the URL arrives already parsed instead
+/// of scraped out of a display message.
+fn result_for_read_error(error: c2pa::Error, exif: Option<ExifInfo>) -> C2paAnalysisResult {
+    if let c2pa::Error::RemoteManifestUrl(url) = &error {
+        let mut result = C2paAnalysisResult::remote_manifest_pending(url.clone());
+        if let Some(exif_info) = exif {
+            merge_exif(&mut result, exif_info);
         }
+        return result;
+    }
+
+    let error_msg = error.to_string().to_lowercase();
+
+    // Check for various "no manifest" conditions
+    if error_msg.contains("not found")
+        || error_msg.contains("jumbfnotfound")
+        || error_msg.contains("no manifest")
+        || error_msg.contains("jumbf")
+    {
+        match exif {
+            Some(exif_info) => C2paAnalysisResult::no_manifest_with_exif(exif_info),
+            None => C2paAnalysisResult::no_manifest(),
+        }
+    }
+    // CBOR parsing errors often mean corrupted or incompatible manifest
+    else if error_msg.contains("cbor")
+        || error_msg.contains("claim could not be")
+        || error_msg.contains("deserialization")
+        || error_msg.contains("invalid")
+    {
+        let mut result = C2paAnalysisResult::error(
+            "This image contains C2PA data that could not be parsed. It may be corrupted or use an unsupported format.".to_string(),
+        );
+        if let Some(exif_info) = exif {
+            merge_exif(&mut result, exif_info);
+        }
+        result
+    } else {
+        let mut result = C2paAnalysisResult::error(error.to_string());
+        if let Some(exif_info) = exif {
+            merge_exif(&mut result, exif_info);
+        }
+        result
     }
 }
 
@@ -1162,6 +1068,126 @@ fn classify_validation_status(statuses: Option<&[c2pa::validation_status::Valida
 
 pub fn c2pa_sdk_version() -> String {
     "c2pa-rs 0.32".to_string()
+}
+
+/// Maximum manifest size this app will accept from a remote host, in bytes.
+///
+/// A C2PA manifest store is claim CBOR, assertions and a signature. Real ones
+/// run from a few kilobytes to a few hundred, and the thumbnail assertions
+/// that dominate the large end are bounded by the same specification that
+/// bounds everything else in the box. 2 MB leaves roughly an order of
+/// magnitude of headroom above anything observed while keeping a hostile or
+/// broken host from streaming without end into a phone's memory.
+///
+/// The limit is enforced against the bytes actually read, not against the
+/// `Content-Length` header, because a header is a claim by the same party
+/// being limited. c2pa-rs 0.32.7 sized its buffer from that header and fell
+/// back to assuming 10 MB when it was absent, so a response with no
+/// `Content-Length` set its own ceiling.
+const MAX_REMOTE_MANIFEST_BYTES: usize = 2 * 1024 * 1024;
+
+/// Wall-clock budget for the whole remote-manifest request.
+///
+/// Set explicitly: ureq's default is no timeout at all, which on a mobile
+/// network turns an unreachable host into an analysis that never finishes.
+const REMOTE_MANIFEST_TIMEOUT_SECS: u64 = 15;
+
+/// Fetch a remote C2PA manifest and verify it against the image.
+///
+/// Called only after the user has approved this specific URL. Nothing in the
+/// analysis path reaches it on its own: `analyze_c2pa_from_bytes` and
+/// `analyze_c2pa_from_path` report `RemoteManifestPending` and stop.
+///
+/// The image is not uploaded. The request asks a host for a manifest and sends
+/// nothing of the image with it, so what the host learns is the requesting IP
+/// address and which manifest was asked for.
+///
+/// Rules enforced here rather than delegated:
+///
+/// * **https only.** A plain-http URL is rejected and is never silently
+///   promoted to https: upgrading it would answer a question the user was
+///   shown with a different request than the one they approved. c2pa-rs
+///   accepts both schemes in `is_valid_remote_url`, so this is a narrowing.
+/// * **No downgrade through a redirect.** `https_only` is checked on every
+///   hop in ureq, so an https URL that redirects to http fails instead of
+///   proceeding.
+/// * **A size limit and a timeout**, both explicit, see the constants above.
+///
+/// The returned manifest is not trusted on arrival. It is verified against
+/// `image_data` through `Reader::from_manifest_data_and_stream`, which binds
+/// the claim's hashes to these exact bytes: a host that serves a valid
+/// manifest for a different image produces a validation failure, not a
+/// verified result.
+pub fn fetch_remote_manifest(
+    url: String,
+    image_data: Vec<u8>,
+    mime_type: String,
+) -> C2paAnalysisResult {
+    let parsed = match url::Url::parse(&url) {
+        Ok(u) => u,
+        Err(e) => {
+            return C2paAnalysisResult::error(format!("Manifest address is not a valid URL: {}", e))
+        }
+    };
+
+    if parsed.scheme() != "https" {
+        return C2paAnalysisResult::error(format!(
+            "Manifest address uses {}, not https. Origin Lens does not fetch manifests over an unencrypted connection.",
+            parsed.scheme()
+        ));
+    }
+
+    let agent = ureq::AgentBuilder::new()
+        .https_only(true)
+        .timeout(std::time::Duration::from_secs(REMOTE_MANIFEST_TIMEOUT_SECS))
+        .build();
+
+    let response = match agent.get(parsed.as_str()).call() {
+        Ok(r) => r,
+        Err(ureq::Error::Status(code, _)) => {
+            return C2paAnalysisResult::error(format!(
+                "The manifest host answered with HTTP {}.",
+                code
+            ))
+        }
+        Err(ureq::Error::Transport(t)) => {
+            return C2paAnalysisResult::error(format!("Could not reach the manifest host: {}", t))
+        }
+    };
+
+    // Read one byte past the limit so an oversized body is detected rather
+    // than silently truncated into an unparseable manifest.
+    let mut manifest_bytes: Vec<u8> = Vec::new();
+    if let Err(e) = response
+        .into_reader()
+        .take((MAX_REMOTE_MANIFEST_BYTES + 1) as u64)
+        .read_to_end(&mut manifest_bytes)
+    {
+        return C2paAnalysisResult::error(format!("Could not read the manifest: {}", e));
+    }
+
+    if manifest_bytes.len() > MAX_REMOTE_MANIFEST_BYTES {
+        return C2paAnalysisResult::error(format!(
+            "The manifest exceeds the {} MB limit Origin Lens accepts and was not read.",
+            MAX_REMOTE_MANIFEST_BYTES / (1024 * 1024)
+        ));
+    }
+
+    if manifest_bytes.is_empty() {
+        return C2paAnalysisResult::error("The manifest host returned an empty response.".to_string());
+    }
+
+    let mut cursor = std::io::Cursor::new(image_data.clone());
+    match Reader::from_manifest_data_and_stream(&manifest_bytes, &mime_type, &mut cursor) {
+        Ok(manifest_reader) => {
+            let mut result = parse_manifest_reader(&manifest_reader);
+            if let Some(exif_info) = parse_exif_from_bytes(&image_data) {
+                merge_exif(&mut result, exif_info);
+            }
+            result
+        }
+        Err(e) => result_for_read_error(e, parse_exif_from_bytes(&image_data)),
+    }
 }
 
 /// Check if the native library is properly loaded

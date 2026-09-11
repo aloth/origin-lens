@@ -2180,7 +2180,8 @@ dependencies = [
  "serde_cbor",
  "serde_json",
  "thiserror",
- "tokio",
+ "ureq",
+ "url",
 ]
 
 [[package]]
