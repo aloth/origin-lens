@@ -343,6 +343,12 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
         url: 'https://c2pa.org/',
       ),
       _ResourceLink(
+        icon: Icons.article_rounded,
+        title: 'Origin Lens (WebSci 2026)',
+        subtitle: 'The paper behind this app',
+        url: 'https://doi.org/10.1145/3795513.3806658',
+      ),
+      _ResourceLink(
         icon: Icons.code_rounded,
         title: 'Project JudgeGPT',
         subtitle: 'Related Research Project',
@@ -485,8 +491,12 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
             context,
             icon: Icons.privacy_tip_outlined,
             text: 'Privacy Policy',
+            // Pinned to this release's tag, not to main. A branch URL makes
+            // every installed build show the newest policy, including one
+            // describing behaviour that build does not have. Asked later which
+            // notice governed a shipped version, a tag can answer.
             url:
-                'https://raw.githubusercontent.com/aloth/origin-lens/refs/heads/main/privacy_policy.md',
+                'https://raw.githubusercontent.com/aloth/origin-lens/refs/tags/v1.4.0/privacy_policy.md',
           ),
         ],
       ),
