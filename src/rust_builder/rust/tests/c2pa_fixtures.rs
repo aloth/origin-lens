@@ -7,7 +7,9 @@
 //!
 //! Run with: cargo test --test c2pa_fixtures -- --nocapture
 
-use rust_lib_origin_lens::api::c2pa_reader::{analyze_c2pa_from_path, VerificationStatus};
+use rust_lib_origin_lens::api::c2pa_reader::{
+    analyze_c2pa_from_path, fetch_remote_manifest, VerificationStatus,
+};
 
 fn fixture(name: &str) -> String {
     format!("{}/tests/fixtures/{}", env!("CARGO_MANIFEST_DIR"), name)
@@ -20,6 +22,9 @@ fn describe(status: &VerificationStatus) -> String {
         VerificationStatus::CertificateExpired => "CertificateExpired".to_string(),
         VerificationStatus::CertificateUntrusted => "CertificateUntrusted".to_string(),
         VerificationStatus::NoManifest => "NoManifest".to_string(),
+        VerificationStatus::RemoteManifestPending { url } => {
+            format!("RemoteManifestPending({url})")
+        }
         VerificationStatus::Error { message } => format!("Error({message})"),
     }
 }
@@ -36,6 +41,8 @@ fn survey_all_fixtures() {
         "E-sig-CA.jpg",
         "XCA.jpg",
         "no_manifest.jpg",
+        "cloud.jpg",
+        "remote_manifest_loopback.jpg",
     ];
 
     println!("\n--- fixture survey ---");
@@ -146,4 +153,147 @@ fn failing_fixtures_are_never_verified() {
             }
         }
     }
+}
+
+/// An image whose XMP names a remote manifest must not be fetched during
+/// analysis.
+///
+/// This is the invariant the `fetch_remote_manifests` feature broke. With that
+/// feature compiled in, `Store::load_jumbf_from_stream` answered a missing
+/// embedded manifest by fetching the `dcterms:provenance` URL over the network
+/// from inside `Reader::from_stream`, before any code in this crate could ask
+/// anyone. Analysis of one image silently contacted a host that the image
+/// itself had chosen.
+///
+/// Without the feature the same code path returns `Error::RemoteManifestUrl`,
+/// which this crate turns into `RemoteManifestPending` carrying the URL. The
+/// request becomes something a person can be asked about, and an unanswered
+/// question is a reportable state rather than a completed fetch.
+///
+/// `cloud.jpg` names a real Adobe host, which is what makes it evidence: if
+/// analysis ever fetches again, this test sends a request to a third party
+/// during an offline unit-test run. The assertion is that the returned state
+/// is pending and still carries the untouched URL, so nothing resolved it.
+#[test]
+fn remote_manifest_is_not_fetched_during_analysis() {
+    let path = fixture("cloud.jpg");
+    assert!(
+        std::path::Path::new(&path).exists(),
+        "fixture cloud.jpg is missing; this test cannot prove anything without it"
+    );
+
+    let result = analyze_c2pa_from_path(path);
+
+    match &result.status {
+        VerificationStatus::RemoteManifestPending { url } => {
+            assert_eq!(
+                url, "https://cai-manifests.adobe.com/manifests/adobe-urn-uuid-5f37e182-3687-462e-a7fb-573462780391",
+                "the pending state must carry the URL the image named, unmodified"
+            );
+        }
+        other => panic!(
+            "an image with a remote manifest reference produced {} instead of a pending state; \
+             if this reads as Verified, analysis fetched the manifest over the network",
+            describe(other)
+        ),
+    }
+
+    // Nothing was read, so nothing may be reported as read.
+    assert!(
+        result.raw_manifest_json.is_none(),
+        "no manifest was fetched, yet manifest JSON is present"
+    );
+    assert!(
+        result.signer.is_none(),
+        "no manifest was fetched, yet a signer is reported"
+    );
+    assert!(
+        result.actions.is_empty(),
+        "no manifest was fetched, yet actions are reported"
+    );
+
+    // Local EXIF parsing still runs: it costs no network request.
+    assert!(
+        result.exif_info.is_some(),
+        "local EXIF parsing should still happen on the pending path"
+    );
+}
+
+/// The same invariant, provable without trusting a third party to stay
+/// unreachable.
+///
+/// `remote_manifest_loopback.jpg` is `cloud.jpg` with the provenance URL
+/// rewritten to a closed loopback port. A fetch here cannot leave the machine,
+/// and cannot succeed: were analysis to attempt one it would block on a
+/// connection refusal and surface as an error rather than a pending state.
+#[test]
+fn loopback_remote_manifest_is_not_fetched_during_analysis() {
+    let path = fixture("remote_manifest_loopback.jpg");
+    assert!(
+        std::path::Path::new(&path).exists(),
+        "fixture remote_manifest_loopback.jpg is missing"
+    );
+
+    let result = analyze_c2pa_from_path(path);
+
+    match &result.status {
+        VerificationStatus::RemoteManifestPending { url } => {
+            assert!(
+                url.starts_with("https://127.0.0.1:1/"),
+                "expected the loopback URL to be reported verbatim, got: {url}"
+            );
+        }
+        other => panic!(
+            "expected a pending state, got {}; a connection error here means analysis tried to fetch",
+            describe(other)
+        ),
+    }
+}
+
+/// A plain-http manifest address is refused, and is not promoted to https.
+///
+/// `Store::is_valid_remote_url` in c2pa-rs accepts both schemes, so this is a
+/// deliberate narrowing rather than an inherited default. Silently upgrading
+/// the scheme would be worse than refusing: it would answer the question the
+/// user was shown with a different request than the one they approved.
+///
+/// The URL used here is a closed loopback port, so a regression that removed
+/// the scheme check would fail on connection rather than reach any host.
+#[test]
+fn http_manifest_url_is_refused() {
+    let image = std::fs::read(fixture("cloud.jpg")).expect("reading fixture");
+
+    let result = fetch_remote_manifest(
+        "http://127.0.0.1:1/manifest".to_string(),
+        image,
+        "image/jpeg".to_string(),
+    );
+
+    match &result.status {
+        VerificationStatus::Error { message } => {
+            assert!(
+                message.contains("https"),
+                "the refusal should say why, got: {message}"
+            );
+        }
+        other => panic!("an http manifest URL produced {}", describe(other)),
+    }
+}
+
+/// A manifest address that is not a URL at all is refused before any request.
+#[test]
+fn malformed_manifest_url_is_refused() {
+    let image = std::fs::read(fixture("cloud.jpg")).expect("reading fixture");
+
+    let result = fetch_remote_manifest(
+        "not a url".to_string(),
+        image,
+        "image/jpeg".to_string(),
+    );
+
+    assert!(
+        matches!(result.status, VerificationStatus::Error { .. }),
+        "a malformed manifest address produced {}",
+        describe(&result.status)
+    );
 }
