@@ -45,6 +45,16 @@ class _AnalyzeViewState extends State<AnalyzeView>
   static const String _remoteConsentPrefKey = 'remote_assessment_consent';
   static const String _reverseSearchConsentPrefKey = 'reverse_search_consent';
 
+  /// Prefix for per-host manifest-fetch approvals, one key per host.
+  ///
+  /// Deliberately its own namespace, and deliberately not a single boolean.
+  /// The two upload paths have a fixed destination, so one "don't ask again"
+  /// answers a question whose subject cannot change. Here the image names the
+  /// destination, so a global flag would approve every host any future image
+  /// cares to name. An approval recorded under this prefix covers exactly the
+  /// host it was given for.
+  static const String _manifestHostConsentPrefix = 'manifest_host_consent:';
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -651,6 +661,12 @@ class _AnalyzeViewState extends State<AnalyzeView>
         _showMetadataStrippingWarning(url);
       }
 
+      // A manifest held elsewhere is offered first, and takes precedence. The
+      // AI assessment must not fire while that question is open: doing so
+      // would upload the image to answer a question that a manifest already
+      // on offer may answer without it.
+      if (await _offerManifestFetch(result.status, bytes, mimeType)) return;
+
       // Fallback: offer the remote assessment. Offered, not performed: this is
       // the only path on which the image leaves the device.
       if (!_hasManifest(result.status) && await _confirmRemoteAssessment()) {
@@ -769,6 +785,20 @@ class _AnalyzeViewState extends State<AnalyzeView>
         _isLoading = false;
       });
 
+      // A manifest held elsewhere is offered first, and takes precedence. The
+      // AI assessment must not fire while that question is open: doing so
+      // would upload the image to answer a question that a manifest already
+      // on offer may answer without it.
+      if (result.status is VerificationStatus_RemoteManifestPending) {
+        final fileBytes = await _selectedImage!.readAsBytes();
+        await _offerManifestFetch(
+          result.status,
+          fileBytes,
+          _mimeTypeForPath(_selectedImage!.path),
+        );
+        return;
+      }
+
       // Fallback: offer the remote assessment. Offered, not performed: this is
       // the only path on which the image leaves the device.
       if (!_hasManifest(result.status) && await _confirmRemoteAssessment()) {
@@ -874,6 +904,155 @@ class _AnalyzeViewState extends State<AnalyzeView>
           'Results are contextual signals that need your interpretation, not a '
           'verdict on authenticity.',
     );
+  }
+
+  /// Map a file extension onto the MIME type the Rust core expects.
+  ///
+  /// Mirrors the extension table in `analyze_c2pa_from_path`, so a manifest
+  /// fetched for a file is verified against the same format the embedded read
+  /// used.
+  String _mimeTypeForPath(String path) {
+    final extension = path.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      case 'avif':
+        return 'image/avif';
+      case 'heic':
+      case 'heif':
+        return 'image/heif';
+      case 'tif':
+      case 'tiff':
+        return 'image/tiff';
+      case 'mp4':
+        return 'video/mp4';
+      case 'mov':
+        return 'video/quicktime';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
+  /// Ask before contacting the host an image names as holding its manifest.
+  ///
+  /// This is not [_confirmUpload] and must not become it. That helper offers a
+  /// "don't ask again" that covers a fixed destination. Here the destination
+  /// comes out of the image being examined, so the same checkbox would hand
+  /// every future image a standing approval for any host it chooses to name.
+  /// The option offered instead is bounded to [host], stored under
+  /// [_manifestHostConsentPrefix], and an approval for one host says nothing
+  /// about any other.
+  Future<bool> _confirmManifestFetch(String url) async {
+    final host = Uri.tryParse(url)?.host ?? '';
+    if (host.isEmpty) return false;
+
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('$_manifestHostConsentPrefix$host') == true) return true;
+
+    if (!mounted) return false;
+    bool alwaysAllowHost = false;
+
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (builderContext, setDialogState) => AlertDialog(
+          title: const Text('Fetch this image\'s credentials?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This image carries no Content Credentials of its own. It '
+                'states that they are held at:',
+              ),
+              const SizedBox(height: 12),
+              SelectableText(
+                host,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Your image is not sent. Origin Lens would request the '
+                'credentials from that address and check them against the '
+                'image here on your device.\n\n'
+                'The request does reveal your IP address to that address, and '
+                'the fact that you asked for exactly these credentials. The '
+                'address was chosen by the image, not by Origin Lens.',
+              ),
+              const SizedBox(height: 12),
+              CheckboxListTile(
+                value: alwaysAllowHost,
+                onChanged: (value) =>
+                    setDialogState(() => alwaysAllowHost = value ?? false),
+                title: Text('Always allow $host'),
+                subtitle: const Text('Other addresses will still be asked'),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                dense: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Not now'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Fetch'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Stored only on approval, and only for this host: ticking the box and
+    // then declining authorises nothing.
+    if (approved == true && alwaysAllowHost) {
+      await prefs.setBool('$_manifestHostConsentPrefix$host', true);
+    }
+    return approved == true;
+  }
+
+  /// Offer the manifest fetch, and apply the result when it is approved.
+  ///
+  /// Returns true when the analysis has been handled by this path, which is
+  /// the caller's signal not to fall through to the AI assessment. Declining
+  /// counts as handled: the image stays on the device and the pending state
+  /// remains on screen, which is the honest report of what is known.
+  Future<bool> _offerManifestFetch(
+    VerificationStatus status,
+    Uint8List? bytes,
+    String mimeType,
+  ) async {
+    if (status is! VerificationStatus_RemoteManifestPending) return false;
+    if (bytes == null) return true;
+
+    if (!await _confirmManifestFetch(status.url)) return true;
+
+    _setLoading(true, 'Fetching credentials...');
+    final result = await C2paService.instance.fetchRemoteManifest(
+      url: status.url,
+      imageData: bytes,
+      mimeType: mimeType,
+    );
+
+    if (!mounted) return true;
+    setState(() {
+      _analysisResult = result;
+      _isLoading = false;
+    });
+
+    // The fetched manifest is now the analysis. If it failed to verify, that
+    // is a result about this image, not a reason to upload the image instead.
+    return true;
   }
 
 
@@ -1558,6 +1737,18 @@ class _AnalyzeViewState extends State<AnalyzeView>
       } else {
         statusDesc = 'No C2PA metadata found';
       }
+    } else if (result.status is VerificationStatus_RemoteManifestPending) {
+      // Warning (Orange) - something exists to check, held elsewhere, and not
+      // yet fetched. Distinct from "No Credentials": nothing has been ruled
+      // out here, the question is simply unanswered.
+      statusColor = AppColors.warning;
+      statusIcon = Icons.cloud_download_outlined;
+      statusTitle = 'Credentials Held Elsewhere';
+      final pending = result.status as VerificationStatus_RemoteManifestPending;
+      final host = Uri.tryParse(pending.url)?.host ?? '';
+      statusDesc = host.isEmpty
+          ? 'This image points to credentials stored on another server, which have not been fetched'
+          : 'This image points to credentials stored at $host, which have not been fetched';
     } else if (result.status is VerificationStatus_Error) {
       // Check if error message indicates C2PA data that couldn't be parsed
       final errorStatus = result.status as VerificationStatus_Error;
@@ -1719,8 +1910,32 @@ class _AnalyzeViewState extends State<AnalyzeView>
         _buildCleanDetailRow(
           'Source',
           aiInfo.detectionSource ?? 'C2PA Manifest',
-          isLast: true,
+          isLast: !aiInfo.watermarkDeclared,
         ),
+        // The manifest claims a watermark; the app does not look for one. The
+        // wording keeps those apart on purpose. A stripped file can lose the
+        // manifest while keeping the watermark, and an unsigned manifest can
+        // claim a watermark that was never inserted, so "attested" is the
+        // strongest word this evidence supports.
+        if (aiInfo.watermarkDeclared) ...[
+          _buildCleanDetailRow(
+            'Watermark',
+            'Attested by manifest',
+            isLast: true,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Text(
+              'The manifest states that an invisible watermark was inserted. '
+              'Origin Lens reads that statement; it does not detect watermarks '
+              'in the image itself.',
+              style: AppTypography.bodySmall.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -2637,6 +2852,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
       certificateExpired: () => 'Certificate has expired',
       certificateUntrusted: () => 'Certificate is not trusted',
       noManifest: () => 'No C2PA data found',
+      remoteManifestPending: (url) => 'Credentials are stored remotely and have not been fetched',
       error: (msg) => msg.isNotEmpty ? msg : 'Analysis error',
     );
   }
@@ -2648,6 +2864,11 @@ class _AnalyzeViewState extends State<AnalyzeView>
       certificateExpired: () => true,
       certificateUntrusted: () => true,
       noManifest: () => false,
+      // Not a manifest: nothing has been read, verified or ruled out. It is
+      // also not an invitation to upload. The callers that branch on this
+      // handle the pending state before they reach the AI assessment, so this
+      // answer never decides that path on its own.
+      remoteManifestPending: (url) => false,
       error: (msg) {
         // Check if error message indicates C2PA data exists but couldn't be parsed
         final lowerMsg = msg.toLowerCase();

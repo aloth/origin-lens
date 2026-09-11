@@ -17,6 +17,7 @@ export '../src/rust/api/c2pa_reader.dart'
         VerificationStatus_CertificateExpired,
         VerificationStatus_CertificateUntrusted,
         VerificationStatus_NoManifest,
+        VerificationStatus_RemoteManifestPending,
         VerificationStatus_Error;
 
 /// Service for analyzing C2PA content credentials
@@ -143,6 +144,39 @@ class C2paService {
       return await rust.c2PaSdkVersion();
     } catch (e) {
       return 'Unknown';
+    }
+  }
+
+  /// Fetch a manifest the image points at, and verify it against the image.
+  ///
+  /// Only call this once the user has approved this specific address. The
+  /// analysis functions never reach it on their own: they report
+  /// [rust.VerificationStatus_RemoteManifestPending] and stop, precisely so
+  /// that the request can be put to the user first.
+  ///
+  /// The image is not uploaded. The request asks the host for a manifest;
+  /// the host learns the requesting IP address and which manifest was asked
+  /// for. Scheme, timeout and size limits are enforced in the Rust core.
+  Future<rust.C2paAnalysisResult> fetchRemoteManifest({
+    required String url,
+    required Uint8List imageData,
+    required String mimeType,
+  }) async {
+    try {
+      debugPrint('C2PA: Fetching remote manifest from $url');
+      final result = await rust.fetchRemoteManifest(
+        url: url,
+        imageData: imageData,
+        mimeType: mimeType,
+      );
+      debugPrint('C2PA: Remote manifest result: status=${result.status}');
+      return result;
+    } catch (e) {
+      debugPrint('C2PA: Remote manifest error: $e');
+      return rust.C2paAnalysisResult(
+        status: rust.VerificationStatus.error(message: e.toString()),
+        actions: [],
+      );
     }
   }
 
