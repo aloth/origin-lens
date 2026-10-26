@@ -16,6 +16,7 @@ export '../src/rust/api/c2pa_reader.dart'
         VerificationStatus_SignatureInvalid,
         VerificationStatus_CertificateExpired,
         VerificationStatus_CertificateUntrusted,
+        VerificationStatus_ContentChanged,
         VerificationStatus_NoManifest,
         VerificationStatus_RemoteManifestPending,
         VerificationStatus_Error;

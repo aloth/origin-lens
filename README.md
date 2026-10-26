@@ -53,10 +53,10 @@ Origin Lens goes beyond simple metadata viewing. It performs cryptographic verif
 Cryptographically verify the authenticity of images.
 
 - **Digital signature validation** – Verify cryptographic signatures on embedded C2PA manifests
-- **Certificate chain verification** – Check if signers are trusted and certificates are valid
+- **Certificate checks** – See whether the signing certificate has expired; signers are not checked against a trust list
 - **Tamper detection** – Identify if content has been modified since signing
 - **Signer information** – View organization, issuer, and timestamp details
-- **Multiple verification states** – Verified, Invalid Signature, Expired Certificate, Untrusted, or No Manifest
+- **Clear verdicts** – Content Credentials Valid, AI-Generated (Signed), Credentials Invalid, Credentials Don't Match This Image, Certificate Expired, Signer Not Verified, No Content Credentials, or Screenshot
 
 ### 🤖 AI Generation Detection
 

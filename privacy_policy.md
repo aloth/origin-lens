@@ -1,6 +1,6 @@
 # Privacy Policy for Origin Lens
 
-**Effective Date:** September 11, 2026
+**Effective Date:** October 26, 2026
 
 At Origin Lens ("we," "us," or "our"), operated by Alexander Loth and Dominique Conceicao Rosario, we are committed to protecting your privacy. This Privacy Policy explains our practices regarding the collection, use, and disclosure of information when you use our mobile application, Origin Lens ("App").
 
@@ -55,7 +55,7 @@ Google's handling of data sent to this API is governed by Google's own terms: ht
 If you tap "Check Online Context", the App can look for earlier appearances of an image online.
 
 - **What is sent:** the image, or a URL to it.
-- **Where it goes:** SerpAPI (which queries Google, Bing, and Yandex), or those search engines directly. When a local image needs a public URL first, it is uploaded to imgbb, a temporary image host.
+- **Where it goes:** with the App's built-in keys, SerpAPI, which runs the search on Google. Without those keys, Google, Bing and Yandex directly. When a local image needs a public URL first, it is uploaded to imgbb, a temporary image host.
 - **When:** only after you confirm the upload in a dialog. You may decline, or choose not to be asked again.
 - **Your own keys:** you can supply your own SerpAPI key in the App's settings.
 
@@ -83,7 +83,7 @@ Earlier versions of the App performed this request automatically, without asking
 The App contacts these services, and only for the optional features described above:
 
 - **Google Gemini API** (`generativelanguage.googleapis.com`) – AI assessment of images without Content Credentials
-- **SerpAPI** (serpapi.com) – reverse image search across Google, Bing, and Yandex
+- **SerpAPI** (serpapi.com) – reverse image search on Google
 - **imgbb** (imgbb.com) – temporary image hosting, used to give a local image a URL for reverse search
 - **Search engines directly** (Google, Bing, Yandex) – reverse image search when SerpAPI is not configured
 

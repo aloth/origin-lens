@@ -23,6 +23,7 @@ mixin _$VerificationStatus {
     required TResult Function() signatureInvalid,
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
     required TResult Function() noManifest,
     required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
@@ -33,6 +34,7 @@ mixin _$VerificationStatus {
     TResult? Function()? signatureInvalid,
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
     TResult? Function()? noManifest,
     TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
@@ -43,6 +45,7 @@ mixin _$VerificationStatus {
     TResult Function()? signatureInvalid,
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
     TResult Function()? noManifest,
     TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
@@ -57,6 +60,8 @@ mixin _$VerificationStatus {
     certificateExpired,
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
     required TResult Function(VerificationStatus_RemoteManifestPending value)
     remoteManifestPending,
@@ -71,6 +76,7 @@ mixin _$VerificationStatus {
     certificateExpired,
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
     TResult? Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -85,6 +91,7 @@ mixin _$VerificationStatus {
     certificateExpired,
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
     TResult Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -167,6 +174,7 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     required TResult Function() signatureInvalid,
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
     required TResult Function() noManifest,
     required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
@@ -181,6 +189,7 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     TResult? Function()? signatureInvalid,
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
     TResult? Function()? noManifest,
     TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
@@ -195,6 +204,7 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     TResult Function()? signatureInvalid,
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
     TResult Function()? noManifest,
     TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
@@ -216,6 +226,8 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     certificateExpired,
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
     required TResult Function(VerificationStatus_RemoteManifestPending value)
     remoteManifestPending,
@@ -234,6 +246,7 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     certificateExpired,
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
     TResult? Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -252,6 +265,7 @@ class _$VerificationStatus_VerifiedImpl extends VerificationStatus_Verified {
     certificateExpired,
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
     TResult Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -324,6 +338,7 @@ class _$VerificationStatus_SignatureInvalidImpl
     required TResult Function() signatureInvalid,
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
     required TResult Function() noManifest,
     required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
@@ -338,6 +353,7 @@ class _$VerificationStatus_SignatureInvalidImpl
     TResult? Function()? signatureInvalid,
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
     TResult? Function()? noManifest,
     TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
@@ -352,6 +368,7 @@ class _$VerificationStatus_SignatureInvalidImpl
     TResult Function()? signatureInvalid,
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
     TResult Function()? noManifest,
     TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
@@ -373,6 +390,8 @@ class _$VerificationStatus_SignatureInvalidImpl
     certificateExpired,
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
     required TResult Function(VerificationStatus_RemoteManifestPending value)
     remoteManifestPending,
@@ -391,6 +410,7 @@ class _$VerificationStatus_SignatureInvalidImpl
     certificateExpired,
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
     TResult? Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -409,6 +429,7 @@ class _$VerificationStatus_SignatureInvalidImpl
     certificateExpired,
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
     TResult Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -481,6 +502,7 @@ class _$VerificationStatus_CertificateExpiredImpl
     required TResult Function() signatureInvalid,
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
     required TResult Function() noManifest,
     required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
@@ -495,6 +517,7 @@ class _$VerificationStatus_CertificateExpiredImpl
     TResult? Function()? signatureInvalid,
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
     TResult? Function()? noManifest,
     TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
@@ -509,6 +532,7 @@ class _$VerificationStatus_CertificateExpiredImpl
     TResult Function()? signatureInvalid,
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
     TResult Function()? noManifest,
     TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
@@ -530,6 +554,8 @@ class _$VerificationStatus_CertificateExpiredImpl
     certificateExpired,
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
     required TResult Function(VerificationStatus_RemoteManifestPending value)
     remoteManifestPending,
@@ -548,6 +574,7 @@ class _$VerificationStatus_CertificateExpiredImpl
     certificateExpired,
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
     TResult? Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -566,6 +593,7 @@ class _$VerificationStatus_CertificateExpiredImpl
     certificateExpired,
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
     TResult Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -639,6 +667,7 @@ class _$VerificationStatus_CertificateUntrustedImpl
     required TResult Function() signatureInvalid,
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
     required TResult Function() noManifest,
     required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
@@ -653,6 +682,7 @@ class _$VerificationStatus_CertificateUntrustedImpl
     TResult? Function()? signatureInvalid,
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
     TResult? Function()? noManifest,
     TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
@@ -667,6 +697,7 @@ class _$VerificationStatus_CertificateUntrustedImpl
     TResult Function()? signatureInvalid,
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
     TResult Function()? noManifest,
     TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
@@ -688,6 +719,8 @@ class _$VerificationStatus_CertificateUntrustedImpl
     certificateExpired,
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
     required TResult Function(VerificationStatus_RemoteManifestPending value)
     remoteManifestPending,
@@ -706,6 +739,7 @@ class _$VerificationStatus_CertificateUntrustedImpl
     certificateExpired,
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
     TResult? Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -724,6 +758,7 @@ class _$VerificationStatus_CertificateUntrustedImpl
     certificateExpired,
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
     TResult Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -742,6 +777,221 @@ abstract class VerificationStatus_CertificateUntrusted
   const factory VerificationStatus_CertificateUntrusted() =
       _$VerificationStatus_CertificateUntrustedImpl;
   const VerificationStatus_CertificateUntrusted._() : super._();
+}
+
+/// @nodoc
+abstract class _$$VerificationStatus_ContentChangedImplCopyWith<$Res> {
+  factory _$$VerificationStatus_ContentChangedImplCopyWith(
+    _$VerificationStatus_ContentChangedImpl value,
+    $Res Function(_$VerificationStatus_ContentChangedImpl) then,
+  ) = __$$VerificationStatus_ContentChangedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({List<String> codes});
+}
+
+/// @nodoc
+class __$$VerificationStatus_ContentChangedImplCopyWithImpl<$Res>
+    extends
+        _$VerificationStatusCopyWithImpl<
+          $Res,
+          _$VerificationStatus_ContentChangedImpl
+        >
+    implements _$$VerificationStatus_ContentChangedImplCopyWith<$Res> {
+  __$$VerificationStatus_ContentChangedImplCopyWithImpl(
+    _$VerificationStatus_ContentChangedImpl _value,
+    $Res Function(_$VerificationStatus_ContentChangedImpl) _then,
+  ) : super(_value, _then);
+
+  /// Create a copy of VerificationStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({Object? codes = null}) {
+    return _then(
+      _$VerificationStatus_ContentChangedImpl(
+        codes: null == codes
+            ? _value._codes
+            : codes // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+      ),
+    );
+  }
+}
+
+/// @nodoc
+
+class _$VerificationStatus_ContentChangedImpl
+    extends VerificationStatus_ContentChanged {
+  const _$VerificationStatus_ContentChangedImpl({
+    required final List<String> codes,
+  }) : _codes = codes,
+       super._();
+
+  final List<String> _codes;
+  @override
+  List<String> get codes {
+    if (_codes is EqualUnmodifiableListView) return _codes;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_codes);
+  }
+
+  @override
+  String toString() {
+    return 'VerificationStatus.contentChanged(codes: $codes)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$VerificationStatus_ContentChangedImpl &&
+            const DeepCollectionEquality().equals(other._codes, _codes));
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(_codes));
+
+  /// Create a copy of VerificationStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$VerificationStatus_ContentChangedImplCopyWith<
+    _$VerificationStatus_ContentChangedImpl
+  >
+  get copyWith =>
+      __$$VerificationStatus_ContentChangedImplCopyWithImpl<
+        _$VerificationStatus_ContentChangedImpl
+      >(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() verified,
+    required TResult Function() signatureInvalid,
+    required TResult Function() certificateExpired,
+    required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
+    required TResult Function() noManifest,
+    required TResult Function(String url) remoteManifestPending,
+    required TResult Function(String message) error,
+  }) {
+    return contentChanged(codes);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? verified,
+    TResult? Function()? signatureInvalid,
+    TResult? Function()? certificateExpired,
+    TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
+    TResult? Function()? noManifest,
+    TResult? Function(String url)? remoteManifestPending,
+    TResult? Function(String message)? error,
+  }) {
+    return contentChanged?.call(codes);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? verified,
+    TResult Function()? signatureInvalid,
+    TResult Function()? certificateExpired,
+    TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
+    TResult Function()? noManifest,
+    TResult Function(String url)? remoteManifestPending,
+    TResult Function(String message)? error,
+    required TResult orElse(),
+  }) {
+    if (contentChanged != null) {
+      return contentChanged(codes);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(VerificationStatus_Verified value) verified,
+    required TResult Function(VerificationStatus_SignatureInvalid value)
+    signatureInvalid,
+    required TResult Function(VerificationStatus_CertificateExpired value)
+    certificateExpired,
+    required TResult Function(VerificationStatus_CertificateUntrusted value)
+    certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
+    required TResult Function(VerificationStatus_NoManifest value) noManifest,
+    required TResult Function(VerificationStatus_RemoteManifestPending value)
+    remoteManifestPending,
+    required TResult Function(VerificationStatus_Error value) error,
+  }) {
+    return contentChanged(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(VerificationStatus_Verified value)? verified,
+    TResult? Function(VerificationStatus_SignatureInvalid value)?
+    signatureInvalid,
+    TResult? Function(VerificationStatus_CertificateExpired value)?
+    certificateExpired,
+    TResult? Function(VerificationStatus_CertificateUntrusted value)?
+    certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
+    TResult? Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult? Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
+    TResult? Function(VerificationStatus_Error value)? error,
+  }) {
+    return contentChanged?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(VerificationStatus_Verified value)? verified,
+    TResult Function(VerificationStatus_SignatureInvalid value)?
+    signatureInvalid,
+    TResult Function(VerificationStatus_CertificateExpired value)?
+    certificateExpired,
+    TResult Function(VerificationStatus_CertificateUntrusted value)?
+    certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
+    TResult Function(VerificationStatus_NoManifest value)? noManifest,
+    TResult Function(VerificationStatus_RemoteManifestPending value)?
+    remoteManifestPending,
+    TResult Function(VerificationStatus_Error value)? error,
+    required TResult orElse(),
+  }) {
+    if (contentChanged != null) {
+      return contentChanged(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class VerificationStatus_ContentChanged extends VerificationStatus {
+  const factory VerificationStatus_ContentChanged({
+    required final List<String> codes,
+  }) = _$VerificationStatus_ContentChangedImpl;
+  const VerificationStatus_ContentChanged._() : super._();
+
+  List<String> get codes;
+
+  /// Create a copy of VerificationStatus
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$VerificationStatus_ContentChangedImplCopyWith<
+    _$VerificationStatus_ContentChangedImpl
+  >
+  get copyWith => throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -797,6 +1047,7 @@ class _$VerificationStatus_NoManifestImpl
     required TResult Function() signatureInvalid,
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
     required TResult Function() noManifest,
     required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
@@ -811,6 +1062,7 @@ class _$VerificationStatus_NoManifestImpl
     TResult? Function()? signatureInvalid,
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
     TResult? Function()? noManifest,
     TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
@@ -825,6 +1077,7 @@ class _$VerificationStatus_NoManifestImpl
     TResult Function()? signatureInvalid,
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
     TResult Function()? noManifest,
     TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
@@ -846,6 +1099,8 @@ class _$VerificationStatus_NoManifestImpl
     certificateExpired,
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
     required TResult Function(VerificationStatus_RemoteManifestPending value)
     remoteManifestPending,
@@ -864,6 +1119,7 @@ class _$VerificationStatus_NoManifestImpl
     certificateExpired,
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
     TResult? Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -882,6 +1138,7 @@ class _$VerificationStatus_NoManifestImpl
     certificateExpired,
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
     TResult Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -986,6 +1243,7 @@ class _$VerificationStatus_RemoteManifestPendingImpl
     required TResult Function() signatureInvalid,
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
     required TResult Function() noManifest,
     required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
@@ -1000,6 +1258,7 @@ class _$VerificationStatus_RemoteManifestPendingImpl
     TResult? Function()? signatureInvalid,
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
     TResult? Function()? noManifest,
     TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
@@ -1014,6 +1273,7 @@ class _$VerificationStatus_RemoteManifestPendingImpl
     TResult Function()? signatureInvalid,
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
     TResult Function()? noManifest,
     TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
@@ -1035,6 +1295,8 @@ class _$VerificationStatus_RemoteManifestPendingImpl
     certificateExpired,
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
     required TResult Function(VerificationStatus_RemoteManifestPending value)
     remoteManifestPending,
@@ -1053,6 +1315,7 @@ class _$VerificationStatus_RemoteManifestPendingImpl
     certificateExpired,
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
     TResult? Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -1071,6 +1334,7 @@ class _$VerificationStatus_RemoteManifestPendingImpl
     certificateExpired,
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
     TResult Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -1180,6 +1444,7 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     required TResult Function() signatureInvalid,
     required TResult Function() certificateExpired,
     required TResult Function() certificateUntrusted,
+    required TResult Function(List<String> codes) contentChanged,
     required TResult Function() noManifest,
     required TResult Function(String url) remoteManifestPending,
     required TResult Function(String message) error,
@@ -1194,6 +1459,7 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     TResult? Function()? signatureInvalid,
     TResult? Function()? certificateExpired,
     TResult? Function()? certificateUntrusted,
+    TResult? Function(List<String> codes)? contentChanged,
     TResult? Function()? noManifest,
     TResult? Function(String url)? remoteManifestPending,
     TResult? Function(String message)? error,
@@ -1208,6 +1474,7 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     TResult Function()? signatureInvalid,
     TResult Function()? certificateExpired,
     TResult Function()? certificateUntrusted,
+    TResult Function(List<String> codes)? contentChanged,
     TResult Function()? noManifest,
     TResult Function(String url)? remoteManifestPending,
     TResult Function(String message)? error,
@@ -1229,6 +1496,8 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     certificateExpired,
     required TResult Function(VerificationStatus_CertificateUntrusted value)
     certificateUntrusted,
+    required TResult Function(VerificationStatus_ContentChanged value)
+    contentChanged,
     required TResult Function(VerificationStatus_NoManifest value) noManifest,
     required TResult Function(VerificationStatus_RemoteManifestPending value)
     remoteManifestPending,
@@ -1247,6 +1516,7 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     certificateExpired,
     TResult? Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult? Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult? Function(VerificationStatus_NoManifest value)? noManifest,
     TResult? Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,
@@ -1265,6 +1535,7 @@ class _$VerificationStatus_ErrorImpl extends VerificationStatus_Error {
     certificateExpired,
     TResult Function(VerificationStatus_CertificateUntrusted value)?
     certificateUntrusted,
+    TResult Function(VerificationStatus_ContentChanged value)? contentChanged,
     TResult Function(VerificationStatus_NoManifest value)? noManifest,
     TResult Function(VerificationStatus_RemoteManifestPending value)?
     remoteManifestPending,

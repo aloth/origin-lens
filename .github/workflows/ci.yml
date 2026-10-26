@@ -30,14 +30,17 @@ jobs:
         run: cargo test --verbose
 
   flutter:
-    name: Flutter analysis
+    name: Flutter analysis and tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      # Pinned so an analyzer or framework release cannot change the result of
+      # an unchanged commit. Matches the version the release builds use.
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.38.3
 
       - name: Install dependencies
         working-directory: src
@@ -52,3 +55,12 @@ jobs:
       - name: Analyze
         working-directory: src
         run: flutter analyze lib/ --no-fatal-infos --no-fatal-warnings
+
+      # Pure Dart and widget tests. They do not load the Rust library, so no
+      # native build is needed. src/.env is gitignored but listed as an asset,
+      # so an empty one is created for the asset bundle to resolve.
+      - name: Test
+        working-directory: src
+        run: |
+          touch .env
+          flutter test

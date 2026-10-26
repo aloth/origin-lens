@@ -82,7 +82,7 @@ class SynthIdService {
     _isConfigured = apiKey.isNotEmpty;
     debugPrint('═══════════════════════════════════════════════════════════════');
     debugPrint('SynthID Service: Configured');
-    debugPrint('  API key: ${apiKey.isNotEmpty ? "${apiKey.substring(0, 8)}..." : "NOT SET"}');
+    debugPrint('  API key: ${apiKey.isNotEmpty ? "set" : "not set"}');
     debugPrint('  isConfigured: $_isConfigured');
     debugPrint('═══════════════════════════════════════════════════════════════');
   }

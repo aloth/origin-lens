@@ -8,7 +8,8 @@
 //! Run with: cargo test --test c2pa_fixtures -- --nocapture
 
 use rust_lib_origin_lens::api::c2pa_reader::{
-    analyze_c2pa_from_path, fetch_remote_manifest, VerificationStatus,
+    analyze_c2pa_from_bytes, analyze_c2pa_from_path, c2pa_sdk_version, fetch_remote_manifest,
+    VerificationStatus,
 };
 
 fn fixture(name: &str) -> String {
@@ -21,6 +22,9 @@ fn describe(status: &VerificationStatus) -> String {
         VerificationStatus::SignatureInvalid => "SignatureInvalid".to_string(),
         VerificationStatus::CertificateExpired => "CertificateExpired".to_string(),
         VerificationStatus::CertificateUntrusted => "CertificateUntrusted".to_string(),
+        VerificationStatus::ContentChanged { codes } => {
+            format!("ContentChanged({})", codes.join(", "))
+        }
         VerificationStatus::NoManifest => "NoManifest".to_string(),
         VerificationStatus::RemoteManifestPending { url } => {
             format!("RemoteManifestPending({url})")
@@ -43,6 +47,7 @@ fn survey_all_fixtures() {
         "no_manifest.jpg",
         "cloud.jpg",
         "remote_manifest_loopback.jpg",
+        "screenshot_marker.png",
     ];
 
     println!("\n--- fixture survey ---");
@@ -97,10 +102,11 @@ fn file_without_manifest_is_not_verified() {
 /// "trust". That code contains none of them, so it fell through to Verified and
 /// the app displayed a tampered image as authentic.
 ///
-/// This test fails against that implementation and passes against the current
-/// one, which is the only reason to trust either.
+/// It is now its own state, `ContentChanged`, carrying the failing code, so the
+/// interface can say that the image changed after signing rather than showing
+/// a generic error.
 #[test]
-fn tampered_asset_binding_is_not_verified() {
+fn tampered_asset_binding_is_content_changed() {
     let path = fixture("XCA.jpg");
     assert!(
         std::path::Path::new(&path).exists(),
@@ -110,10 +116,10 @@ fn tampered_asset_binding_is_not_verified() {
     let result = analyze_c2pa_from_path(path);
 
     match &result.status {
-        VerificationStatus::Error { message } => {
+        VerificationStatus::ContentChanged { codes } => {
             assert!(
-                message.contains("assertion.dataHash.mismatch"),
-                "expected the failing status code to be named, got: {message}"
+                codes.iter().any(|c| c == "assertion.dataHash.mismatch"),
+                "expected the failing status code to be named, got: {codes:?}"
             );
         }
         other => panic!(
@@ -121,6 +127,98 @@ fn tampered_asset_binding_is_not_verified() {
             describe(other)
         ),
     }
+}
+
+/// A broken signature must be reported as invalid.
+///
+/// E-sig-CA.jpg carries a manifest whose COSE signature does not verify. With
+/// c2pa built without its `openssl` feature, every signature is accepted by
+/// `DummyValidator` and this file reads as at most untrusted; this test fails
+/// whenever that validator is active.
+#[test]
+fn broken_signature_is_signature_invalid() {
+    let path = fixture("E-sig-CA.jpg");
+    assert!(std::path::Path::new(&path).exists(), "fixture E-sig-CA.jpg is missing");
+
+    let result = analyze_c2pa_from_path(path);
+    assert!(
+        matches!(result.status, VerificationStatus::SignatureInvalid),
+        "E-sig-CA.jpg should fail signature validation, got {}",
+        describe(&result.status)
+    );
+}
+
+/// Intact fixtures with a valid signature and matching content are Verified.
+///
+/// This is the counterpart to the two failure tests: real validation must not
+/// turn every signed file red.
+#[test]
+fn intact_fixtures_are_verified() {
+    for name in ["C.jpg", "CA.jpg"] {
+        let result = analyze_c2pa_from_path(fixture(name));
+        assert!(
+            matches!(result.status, VerificationStatus::Verified),
+            "{name} should verify, got {}",
+            describe(&result.status)
+        );
+    }
+}
+
+/// A file without a manifest is NoManifest, not an error.
+#[test]
+fn file_without_manifest_is_no_manifest() {
+    let result = analyze_c2pa_from_path(fixture("no_manifest.jpg"));
+    assert!(
+        matches!(result.status, VerificationStatus::NoManifest),
+        "no_manifest.jpg produced {}",
+        describe(&result.status)
+    );
+}
+
+/// The screenshot marker is read from a PNG eXIf chunk, on both input paths.
+///
+/// `screenshot_marker.png` is a synthetic 2x2 PNG whose eXIf chunk carries the
+/// UserComment `ASCII\0\0\0Screenshot`, the form iOS and macOS write. Both
+/// paths read EXIF from the image container; `read_raw` on the whole file
+/// expects a bare TIFF structure and finds no EXIF in a PNG or JPEG.
+#[test]
+fn screenshot_marker_is_detected_from_png() {
+    let path = fixture("screenshot_marker.png");
+    let from_path = analyze_c2pa_from_path(path.clone());
+    let exif = from_path.exif_info.expect("EXIF from the path entry point");
+    assert!(exif.is_screenshot, "path entry point missed the marker: {:?}", exif.user_comment);
+    assert_eq!(exif.user_comment.as_deref(), Some("Screenshot"));
+    assert!(matches!(from_path.status, VerificationStatus::NoManifest));
+
+    let bytes = std::fs::read(&path).expect("reading fixture");
+    let from_bytes = analyze_c2pa_from_bytes(bytes, "image/png".to_string());
+    let exif = from_bytes.exif_info.expect("EXIF from the bytes entry point");
+    assert!(exif.is_screenshot, "bytes entry point missed the marker");
+}
+
+/// The bytes path reads EXIF out of a JPEG container as well.
+#[test]
+fn bytes_path_reads_jpeg_exif() {
+    let path = fixture("cloud.jpg");
+    let from_path = analyze_c2pa_from_path(path.clone());
+    let bytes = std::fs::read(&path).expect("reading fixture");
+    let from_bytes = analyze_c2pa_from_bytes(bytes, "image/jpeg".to_string());
+    let a = from_path.exif_info.expect("EXIF from path");
+    let b = from_bytes.exif_info.expect("EXIF from bytes");
+    assert_eq!(a.software, b.software);
+    assert!(a.software.is_some());
+    assert!(!b.is_screenshot, "a camera or editor file is not a screenshot");
+}
+
+/// The reported SDK version is the one Cargo.lock resolves.
+#[test]
+fn sdk_version_matches_lockfile() {
+    let lock = std::fs::read_to_string(format!("{}/Cargo.lock", env!("CARGO_MANIFEST_DIR")))
+        .expect("reading Cargo.lock");
+    let marker = "name = \"c2pa\"\nversion = \"";
+    let start = lock.find(marker).expect("c2pa in Cargo.lock") + marker.len();
+    let version = &lock[start..start + lock[start..].find('"').unwrap()];
+    assert_eq!(c2pa_sdk_version(), format!("c2pa-rs {version} (OpenSSL)"));
 }
 
 /// No fixture may be reported as verified while the library reports failures.
@@ -142,15 +240,15 @@ fn failing_fixtures_are_never_verified() {
         }
         let result = analyze_c2pa_from_path(path);
 
-        // An Error carrying validation codes must name them, so a failure is
-        // never reduced to a bare "verified" or an empty message.
-        if let VerificationStatus::Error { message } = &result.status {
-            if message.starts_with("C2PA manifest validation failed") {
-                assert!(
-                    message.contains('.'),
-                    "{name}: validation error without any status code: {message}"
-                );
-            }
+        // Validation failures are never reported as a generic Error: that
+        // state is reserved for files that could not be read at all.
+        assert!(
+            !matches!(result.status, VerificationStatus::Error { .. }),
+            "{name}: validation outcome reported as a read error: {}",
+            describe(&result.status)
+        );
+        if let VerificationStatus::ContentChanged { codes } = &result.status {
+            assert!(!codes.is_empty(), "{name}: ContentChanged without any status code");
         }
     }
 }

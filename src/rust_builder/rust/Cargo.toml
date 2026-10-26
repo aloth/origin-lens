@@ -19,7 +19,13 @@ flutter_rust_bridge = "=2.11.1"
 # Error::RemoteManifestUrl carrying the URL, which this crate turns into a
 # reportable state. The fetch then happens only in fetch_remote_manifest, on an
 # explicit call, under this crate's own scheme, timeout and size rules.
-c2pa = { version = "0.32", features = ["unstable_api"] }
+#
+# openssl selects the real COSE signature validators. Without it, c2pa-rs 0.32
+# falls back to DummyValidator, which accepts every signature, so a forged or
+# corrupted signature would read as valid. c2pa enables the vendored
+# openssl-src build for it; for iOS, the deployment target that build compiles
+# against is set in ios/rust_lib_origin_lens.podspec.
+c2pa = { version = "0.32", features = ["unstable_api", "openssl"] }
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

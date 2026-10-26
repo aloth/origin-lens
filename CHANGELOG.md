@@ -4,6 +4,45 @@ Origin Lens verifies image authenticity on device. It reads C2PA Content Credent
 
 This file records what changed in each release. Entries before 1.4.0 were written from the release notes published at the time.
 
+## 1.4.1 - 2026-10-26
+
+### Color-coded verdicts
+
+Every analysis now opens with a verdict in one of four colors, drawn as a solid band at the top of the status card. Color and title come from one tested function with a fixed order: red over purple over green over yellow. Every color pair meets WCAG AA contrast, and the band carries a single screen reader label.
+
+| Verdict | Color | Meaning |
+|---|---|---|
+| Content Credentials Valid | green | The signature is valid and the image is unchanged since signing. The signer is not checked against a trust list. |
+| AI-Generated (Signed) | purple | Valid, signed credentials declare the image as AI-generated. |
+| Credentials Invalid | red | The credentials fail validation. |
+| Credentials Don't Match This Image | red | The image was changed after it was signed. |
+| Certificate Expired | yellow | The signing certificate has expired, so the signature could not be checked. |
+| Signer Not Verified | yellow | The signing certificate could not be validated. |
+| No Content Credentials | yellow | Most images carry none, which alone is not a sign of manipulation. |
+| Screenshot | yellow | A screenshot never carries the original's credentials. |
+| Credentials Held Elsewhere | yellow | The image points to credentials on another server that have not been fetched. |
+
+"Content Credentials Valid" replaces "Verified Authentic", and "Signer Not Verified" replaces "Untrusted Certificate".
+
+AI tool names found only in unsigned EXIF metadata appear as a secondary line and never set the verdict. Below a red verdict, the creator and history sections are titled "Claimed by the failed credentials". Raw status codes appear on a secondary line below a plain sentence. Screenshots are recognized by the EXIF marker that iOS and macOS write, never by image size.
+
+### Signature validation with OpenSSL
+
+The verification core builds c2pa-rs 0.32.7 with OpenSSL 3.6.3 and validates manifest signatures on device. The SDK version in the app reads "c2pa-rs 0.32.7 (OpenSSL)". The OpenSSL license notice is in `THIRD_PARTY_NOTICES.md`.
+
+### Gallery
+
+The Gallery button opens the system photo picker and passes the photo file to the analysis as stored, without re-encoding it. No photo library permission is needed.
+
+### Also in this release
+
+- EXIF details are shown for every image that carries them, with or without Content Credentials, including images opened from a web address.
+- The Gemini card is titled "AI Opinion (Gemini, experimental)", uses neutral colors, and shows one of three outcomes: a reported SynthID watermark, none reported, or no answer.
+- The reverse image search prompt names each service involved: with the built-in keys, the image is stored for five minutes on imgbb and its address is sent to SerpAPI, which searches Google; without them, it goes directly to Google, Bing and Yandex. The privacy policy uses the same wording, and the in-app link points at this release's tag.
+- Configuration logs state only whether an API key is set.
+- The Learn tab has a "Cite Origin Lens" row that copies references to both papers. Several FAQ answers are updated, including the Adobe Firefly test, which now expects "AI-Generated (Signed)".
+- Tests cover every verdict and its exact text, the contrast of each band color, and the citation text against `CITATION.cff`. Rust tests use the c2pa-rs test fixtures and a synthetic screenshot PNG. CI runs the widget tests on a pinned Flutter 3.38.3.
+
 ## 1.4.0 - 2026-09-11
 
 ### Content Credentials held elsewhere are now fetched only with your consent

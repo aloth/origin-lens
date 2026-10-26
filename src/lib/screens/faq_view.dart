@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../app_info.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common_widgets.dart';
 
@@ -22,13 +24,13 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
       icon: Icons.shield_outlined,
       question: 'What is Origin Lens?',
       answer:
-          'Origin Lens is a powerful tool designed to help you verify the authenticity of digital images. It analyzes C2PA metadata and uses reverse image search to identify if an image has been manipulated, is AI-generated, or taken out of context.',
+          'Origin Lens helps you check where a digital image comes from. On your device, it reads C2PA Content Credentials, verifies their signature, and checks whether the image was changed after signing. An optional reverse image search shows where else the image has appeared online, as context for your own judgment.',
     ),
     _FaqItem(
       icon: Icons.verified_outlined,
       question: 'What is C2PA?',
       answer:
-          'C2PA (Coalition for Content Provenance and Authenticity) is an open technical standard that allows publishers to embed tamper-evident information about who created a piece of content and how it was altered. Origin Lens reads this data to show you the complete history of an image.',
+          'C2PA (Coalition for Content Provenance and Authenticity) is an open technical standard that allows publishers to embed tamper-evident information about who created a piece of content and how it was altered. Origin Lens reads this data and shows what the credentials record about how the image was made and edited.',
     ),
     _FaqItem(
       icon: Icons.auto_awesome_outlined,
@@ -59,8 +61,6 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
           '✅ Shutterstock AI\n'
           '✅ Getty Images AI\n\n'
           'Not yet supported:\n'
-          '❌ ChatGPT / DALL-E\n'
-          '❌ Google Gemini / Imagen\n'
           '❌ Midjourney\n'
           '❌ Stable Diffusion',
     ),
@@ -95,7 +95,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
           '4. Choose PNG or JPG format\n'
           '5. Save to Files app (not Photos)\n'
           '6. Open Origin Lens and use "Select from Files"\n\n'
-          'The image should show "Verified" with Adobe Firefly as the creator.',
+          'The result should show "AI-Generated (Signed)": signed Content Credentials from Adobe declare the image as AI-generated.',
     ),
   ];
 
@@ -349,6 +349,13 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
         url: 'https://doi.org/10.1145/3795513.3806658',
       ),
       _ResourceLink(
+        icon: Icons.format_quote_rounded,
+        title: 'Cite Origin Lens',
+        subtitle: 'Copy references to both papers',
+        trailingIcon: Icons.copy_rounded,
+        onTap: () => _copyCitation(context),
+      ),
+      _ResourceLink(
         icon: Icons.code_rounded,
         title: 'Project JudgeGPT',
         subtitle: 'Related Research Project',
@@ -369,7 +376,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
               Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () => _launchUrl(resource.url),
+                  onTap: resource.onTap ?? () => _launchUrl(resource.url!),
                   child: Padding(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     child: Row(
@@ -403,7 +410,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
                           ),
                         ),
                         Icon(
-                          Icons.arrow_forward_ios_rounded,
+                          resource.trailingIcon,
                           color: theme.colorScheme.onSurfaceVariant.withOpacity(
                             0.5,
                           ),
@@ -424,6 +431,17 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
             ],
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Future<void> _copyCitation(BuildContext context) async {
+    await Clipboard.setData(const ClipboardData(text: kCiteOriginLensText));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('References copied'),
+        duration: Duration(seconds: 2),
       ),
     );
   }
@@ -462,7 +480,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
                       ),
                     ),
                     Text(
-                      _version.isNotEmpty ? _version : 'Version 1.2.0',
+                      _version.isNotEmpty ? _version : 'Version $kAppVersion',
                       style: AppTypography.bodySmall.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -496,7 +514,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
             // describing behaviour that build does not have. Asked later which
             // notice governed a shipped version, a tag can answer.
             url:
-                'https://raw.githubusercontent.com/aloth/origin-lens/refs/tags/v1.4.0/privacy_policy.md',
+                'https://raw.githubusercontent.com/aloth/origin-lens/refs/tags/v1.4.1/privacy_policy.md',
           ),
         ],
       ),
@@ -568,12 +586,16 @@ class _ResourceLink {
   final IconData icon;
   final String title;
   final String subtitle;
-  final String url;
+  final String? url;
+  final VoidCallback? onTap;
+  final IconData trailingIcon;
 
   const _ResourceLink({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.url,
-  });
+    this.url,
+    this.onTap,
+    this.trailingIcon = Icons.arrow_forward_ios_rounded,
+  }) : assert(url != null || onTap != null);
 }

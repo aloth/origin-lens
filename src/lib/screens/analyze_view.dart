@@ -3,16 +3,18 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/c2pa_service.dart';
 import '../services/reverse_image_search_service.dart';
 import '../services/synthid_service.dart';
 import '../theme/app_theme.dart';
+import '../verdict.dart';
 import '../widgets/common_widgets.dart';
+import '../widgets/verdict_card.dart';
 
 class AnalyzeView extends StatefulWidget {
   final File? initialImage;
@@ -35,7 +37,6 @@ class _AnalyzeViewState extends State<AnalyzeView>
   bool _isSynthIdLoading = false;
   String _loadingMessage = '';
 
-  final ImagePicker _picker = ImagePicker();
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _imgbbKeyController = TextEditingController();
   final TextEditingController _serpApiKeyController = TextEditingController();
@@ -209,7 +210,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Context search uses Bing, Yandex, TinEye, and Google for comprehensive results - no API keys required!',
+                          'Context search uses Google, Bing and Yandex - no API keys required.',
                           style: AppTypography.bodySmall.copyWith(
                             color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                           ),
@@ -425,17 +426,41 @@ class _AnalyzeViewState extends State<AnalyzeView>
     }
   }
 
+  /// Pick from the photo library and keep the original file.
+  ///
+  /// file_picker with compression off runs PHPicker in its "current"
+  /// representation mode and copies the file it is given unchanged, so the
+  /// JUMBF boxes that carry C2PA Content Credentials stay in the file. A picker
+  /// that decodes and re-encodes the pixels copies back only the ImageIO
+  /// properties and drops those boxes. PHPicker runs out of process, so this
+  /// needs no photo library permission.
   Future<void> _pickFromGallery() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowCompression: false,
       );
-      if (pickedFile != null) {
-        _setImage(File(pickedFile.path), null, null);
+      final path = result?.files.single.path;
+      if (path != null) {
+        _setImage(await _moveToTemporaryDirectory(File(path)), null, null);
         await _analyzeImage();
       }
     } catch (e) {
       _showError('Failed to pick image: $e');
+    }
+  }
+
+  /// file_picker stores media picks under Documents/picked_images, which is
+  /// kept and included in device backups. The copy is moved to the temporary
+  /// directory, which the system can purge, so picked photos do not pile up.
+  Future<File> _moveToTemporaryDirectory(File picked) async {
+    try {
+      final tmp = await getTemporaryDirectory();
+      final name = picked.uri.pathSegments.last;
+      return await picked.rename('${tmp.path}/$name');
+    } catch (e) {
+      debugPrint('Could not move picked file to the temporary directory: $e');
+      return picked;
     }
   }
 
@@ -898,9 +923,12 @@ class _AnalyzeViewState extends State<AnalyzeView>
       title: 'Upload this image to search engines?',
       body:
           'Reverse image search looks for earlier appearances of this image. '
-          'Doing so uploads it to third-party services: Google, Bing, Yandex '
-          'and TinEye, and to an image host first when no API key is '
-          'configured.\n\n'
+          'Doing so sends it to third-party services. With the built-in '
+          'search keys, the image is first stored for five minutes on imgbb, '
+          'an image host, and its address is then sent to SerpAPI, which '
+          'searches Google. An image opened from a web address is not '
+          'uploaded; only its address goes to SerpAPI. Without those keys, '
+          'the image goes directly to Bing, Yandex and Google.\n\n'
           'Results are contextual signals that need your interpretation, not a '
           'verdict on authenticity.',
     );
@@ -1073,6 +1101,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
       debugPrint('SynthID error: $e');
       if (mounted) {
         setState(() {
+          _synthIdResult = SynthIdResult.error('Request failed');
           _isSynthIdLoading = false;
         });
       }
@@ -1096,6 +1125,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
       debugPrint('SynthID error: $e');
       if (mounted) {
         setState(() {
+          _synthIdResult = SynthIdResult.error('Request failed');
           _isSynthIdLoading = false;
         });
       }
@@ -1115,7 +1145,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
     debugPrint('  imageUrl: $_imageUrl');
     debugPrint('  imageBytes: ${_imageBytes?.length ?? 0} bytes');
     debugPrint('  selectedImage: ${_selectedImage?.path}');
-    debugPrint('  Engines: Bing, Yandex, TinEye, Google');
+    debugPrint('  Engines: SerpAPI (Google), or Bing, Yandex, Google directly');
     debugPrint(
       '═══════════════════════════════════════════════════════════════',
     );
@@ -1681,151 +1711,23 @@ class _AnalyzeViewState extends State<AnalyzeView>
   }
 
   Widget _buildVerificationCard() {
-    final result = _analysisResult!;
-    final isAi = result.aiInfo?.isAiGenerated ?? false;
-    final theme = Theme.of(context);
-    final isFromUrl = _imageUrl != null;
-
-    Color statusColor;
-    IconData statusIcon;
-    String statusTitle;
-    String statusDesc;
-
-    // Determine status based on verification result following the semantic color system:
-    // - Verified (Green): Valid C2PA credentials, intact signature, trusted chain
-    // - AI Generated (Purple): C2PA assertions indicate AI generation
-    // - Warning (Orange): Ambiguities - expired certs, incomplete trust, parsing errors, no manifest
-    // - Invalid (Red): Manifest found but hash mismatch - indicates manipulation
-
-    if (isAi) {
-      // AI Generated (Purple) - Content contains AI generation markers
-      statusColor = AppColors.aiGenerated;
-      statusIcon = Icons.auto_awesome_rounded;
-      statusTitle = 'AI Generated';
-      statusDesc = 'Content contains AI generation markers';
-    } else if (result.status is VerificationStatus_Verified) {
-      // Verified (Green) - Valid credentials and trusted chain
-      statusColor = AppColors.verified;
-      statusIcon = Icons.verified_rounded;
-      statusTitle = 'Verified Authentic';
-      statusDesc = 'Digital signature is valid and trusted';
-    } else if (result.status is VerificationStatus_SignatureInvalid) {
-      // Invalid (Red) - Signature mismatch indicates manipulation
-      statusColor = AppColors.danger;
-      statusIcon = Icons.dangerous_rounded;
-      statusTitle = 'Invalid Signature';
-      statusDesc = 'Content may have been modified after signing';
-    } else if (result.status is VerificationStatus_CertificateExpired) {
-      // Warning (Orange) - Certificate expired but content may still be authentic
-      statusColor = AppColors.warning;
-      statusIcon = Icons.schedule_rounded;
-      statusTitle = 'Certificate Expired';
-      statusDesc = 'Credentials are valid but the certificate has expired';
-    } else if (result.status is VerificationStatus_CertificateUntrusted) {
-      // Warning (Orange) - Untrusted certificate chain
-      statusColor = AppColors.warning;
-      statusIcon = Icons.security_rounded;
-      statusTitle = 'Untrusted Certificate';
-      statusDesc = 'Certificate could not be verified against trusted sources';
-    } else if (result.status is VerificationStatus_NoManifest) {
-      // Warning (Orange) - No C2PA data found
-      statusColor = AppColors.warning;
-      statusIcon = Icons.help_outline_rounded;
-      statusTitle = 'No Credentials';
-      if (isFromUrl) {
-        statusDesc = 'No C2PA metadata found. The source may have stripped it.';
-      } else {
-        statusDesc = 'No C2PA metadata found';
-      }
-    } else if (result.status is VerificationStatus_RemoteManifestPending) {
-      // Warning (Orange) - something exists to check, held elsewhere, and not
-      // yet fetched. Distinct from "No Credentials": nothing has been ruled
-      // out here, the question is simply unanswered.
-      statusColor = AppColors.warning;
-      statusIcon = Icons.cloud_download_outlined;
-      statusTitle = 'Credentials Held Elsewhere';
-      final pending = result.status as VerificationStatus_RemoteManifestPending;
-      final host = Uri.tryParse(pending.url)?.host ?? '';
-      statusDesc = host.isEmpty
-          ? 'This image points to credentials stored on another server, which have not been fetched'
-          : 'This image points to credentials stored at $host, which have not been fetched';
-    } else if (result.status is VerificationStatus_Error) {
-      // Check if error message indicates C2PA data that couldn't be parsed
-      final errorStatus = result.status as VerificationStatus_Error;
-      final errorMsg = errorStatus.message.toLowerCase();
-
-      if (errorMsg.contains('c2pa data') ||
-          errorMsg.contains('could not be parsed') ||
-          errorMsg.contains('unsupported format') ||
-          errorMsg.contains('corrupted')) {
-        // Warning (Orange) - C2PA data exists but couldn't be processed
-        statusColor = AppColors.warning;
-        statusIcon = Icons.warning_amber_rounded;
-        statusTitle = 'Parsing Issue';
-        statusDesc = 'C2PA data found but could not be fully verified';
-      } else if (errorMsg.contains('remote') || errorMsg.contains('fetch')) {
-        // Warning (Orange) - Remote manifest issue
-        statusColor = AppColors.warning;
-        statusIcon = Icons.cloud_off_rounded;
-        statusTitle = 'Connection Issue';
-        statusDesc = 'Could not retrieve remote credentials';
-      } else {
-        // Warning (Orange) - Generic error
-        statusColor = AppColors.warning;
-        statusIcon = Icons.error_outline_rounded;
-        statusTitle = 'Analysis Issue';
-        statusDesc = errorStatus.message.isNotEmpty
-            ? errorStatus.message
-            : 'Could not verify credentials';
-      }
-    } else {
-      // Fallback - treat as warning
-      statusColor = AppColors.warning;
-      statusIcon = Icons.help_outline_rounded;
-      statusTitle = 'Unknown Status';
-      statusDesc = _getStatusSubtitle(result.status);
-    }
-
-    return GlassCard(
-      borderColor: statusColor.withOpacity(0.3),
-      borderWidth: 1.5,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(statusIcon, size: 48, color: statusColor),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            statusTitle,
-            style: AppTypography.headlineMedium.copyWith(
-              color: statusColor,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            statusDesc,
-            style: AppTypography.bodyMedium.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    // The decision lives in lib/verdict.dart so it can be tested without a
+    // widget tree; this only renders it.
+    final verdict = computeVerdict(
+      _analysisResult!,
+      fromUrl: _imageUrl != null,
     );
+    return VerdictCard(verdict: verdict);
   }
 
   Widget _buildSynthIdCard() {
+    // Neutral styling on purpose: this is a remote model's opinion, shown
+    // only after the user agreed to send the image, and it never sets the
+    // verdict above.
     if (_isSynthIdLoading) {
       return _buildSection(
-        title: 'SynthID Check',
-        icon: Icons.water_drop_rounded,
+        title: kAiOpinionTitle,
+        icon: Icons.psychology_alt_rounded,
         children: [
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -1837,9 +1739,11 @@ class _AnalyzeViewState extends State<AnalyzeView>
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 const SizedBox(width: AppSpacing.md),
-                Text(
-                  'Checking for invisible watermarks...',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                Expanded(
+                  child: Text(
+                    'Asking Gemini...',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ),
               ],
             ),
@@ -1848,47 +1752,58 @@ class _AnalyzeViewState extends State<AnalyzeView>
       );
     }
 
-    if (_synthIdResult == null || !_synthIdResult!.hasSynthId) {
-      return const SizedBox.shrink();
-    }
+    final opinion = _synthIdResult;
+    if (opinion == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final outcome = aiOpinionOutcome(
+      success: opinion.success,
+      hasSynthId: opinion.hasSynthId,
+    );
+    final detail = outcome == AiOpinionOutcome.noAnswer
+        ? null
+        : opinion.explanation;
 
     return _buildSection(
-      title: 'SynthID Detected',
-      icon: Icons.water_drop_rounded,
+      title: kAiOpinionTitle,
+      icon: Icons.psychology_alt_rounded,
       children: [
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.aiGenerated.withOpacity(0.1),
+            color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.aiGenerated.withOpacity(0.3)),
+            border: Border.all(
+              color: theme.colorScheme.outline.withOpacity(0.3),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.auto_awesome,
-                    color: AppColors.aiGenerated,
-                    size: 20,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'AI Generated Content',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.aiGenerated,
-                    ),
-                  ),
-                ],
+              Text(
+                outcome.headline,
+                style: AppTypography.labelLarge.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
-              if (_synthIdResult!.explanation != null) ...[
+              if (detail != null && detail.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  _synthIdResult!.explanation!,
-                  style: AppTypography.bodyMedium,
+                  detail,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ],
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                kAiOpinionCaveat,
+                style: AppTypography.bodySmall.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ],
           ),
         ),
@@ -2188,13 +2103,50 @@ class _AnalyzeViewState extends State<AnalyzeView>
       );
     }
 
-    if (!hasCredentials) return const SizedBox.shrink();
+    final exif = result.exifInfo;
+    final hasExifRows =
+        exif != null &&
+        (exif.software != null ||
+            exif.make != null ||
+            exif.model != null ||
+            exif.dateTimeOriginal != null);
+    final exifSection = hasExifRows
+        ? _buildSection(
+            title: 'EXIF Data',
+            icon: Icons.camera_alt_outlined,
+            children: [
+              if (exif.software != null)
+                _buildCleanDetailRow('Software', exif.software!),
+              if (exif.make != null)
+                _buildCleanDetailRow('Camera Make', exif.make!),
+              if (exif.model != null)
+                _buildCleanDetailRow('Camera Model', exif.model!),
+              if (exif.dateTimeOriginal != null)
+                _buildCleanDetailRow(
+                  'Date Taken',
+                  exif.dateTimeOriginal!,
+                  isLast: true,
+                ),
+            ],
+          )
+        : null;
+
+    // EXIF is local and present on many images without credentials, so it is
+    // shown whether or not a manifest was found.
+    if (!hasCredentials) {
+      return exifSection ?? const SizedBox.shrink();
+    }
+
+    // Below a red verdict the credentials failed validation. What they say
+    // about the creator and the history is a claim, not a fact.
+    final failed = computeVerdict(result).credentialsFailed;
+    const failedTitle = 'Claimed by the failed credentials';
 
     return Column(
       children: [
         if (result.signer != null)
           _buildSection(
-            title: 'Creator Info',
+            title: failed ? failedTitle : 'Creator Info',
             icon: Icons.person_outline_rounded,
             children: [
               if (result.signer!.name != null)
@@ -2217,7 +2169,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
 
         if (result.actions.isNotEmpty)
           _buildSection(
-            title: 'Edit History',
+            title: failed ? failedTitle : 'Edit History',
             icon: Icons.history_rounded,
             children: [
               ...result.actions
@@ -2245,25 +2197,7 @@ class _AnalyzeViewState extends State<AnalyzeView>
             ],
           ),
 
-        if (result.exifInfo != null)
-          _buildSection(
-            title: 'EXIF Data',
-            icon: Icons.camera_alt_outlined,
-            children: [
-              if (result.exifInfo!.software != null)
-                _buildCleanDetailRow('Software', result.exifInfo!.software!),
-              if (result.exifInfo!.make != null)
-                _buildCleanDetailRow('Camera Make', result.exifInfo!.make!),
-              if (result.exifInfo!.model != null)
-                _buildCleanDetailRow('Camera Model', result.exifInfo!.model!),
-              if (result.exifInfo!.dateTimeOriginal != null)
-                _buildCleanDetailRow(
-                  'Date Taken',
-                  result.exifInfo!.dateTimeOriginal!,
-                  isLast: true,
-                ),
-            ],
-          ),
+        if (exifSection != null) exifSection,
       ],
     );
   }
@@ -2845,24 +2779,15 @@ class _AnalyzeViewState extends State<AnalyzeView>
     }
   }
 
-  String _getStatusSubtitle(VerificationStatus status) {
-    return status.when(
-      verified: () => 'Content credentials verified',
-      signatureInvalid: () => 'Digital signature is invalid',
-      certificateExpired: () => 'Certificate has expired',
-      certificateUntrusted: () => 'Certificate is not trusted',
-      noManifest: () => 'No C2PA data found',
-      remoteManifestPending: (url) => 'Credentials are stored remotely and have not been fetched',
-      error: (msg) => msg.isNotEmpty ? msg : 'Analysis error',
-    );
-  }
-
   bool _hasManifest(VerificationStatus status) {
     return status.when(
       verified: () => true,
       signatureInvalid: () => true,
       certificateExpired: () => true,
       certificateUntrusted: () => true,
+      // A manifest that failed its hash check is still a manifest, and must
+      // not be uploaded for an AI assessment on the grounds that none exists.
+      contentChanged: (codes) => true,
       noManifest: () => false,
       // Not a manifest: nothing has been read, verified or ruled out. It is
       // also not an invitation to upload. The callers that branch on this

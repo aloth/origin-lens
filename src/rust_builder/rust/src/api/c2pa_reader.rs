@@ -3,7 +3,7 @@ use flutter_rust_bridge::frb;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs::File;
-use std::io::{BufReader, Read, Seek, SeekFrom};
+use std::io::{BufReader, Read};
 use std::path::Path;
 use exif::{In, Tag};
 
@@ -159,6 +159,10 @@ pub enum VerificationStatus {
     SignatureInvalid,
     CertificateExpired,
     CertificateUntrusted,
+    /// The manifest's signature verifies, but the asset-binding hash does not
+    /// match the image: the pixels or the container were changed after
+    /// signing. `codes` lists the failing c2pa status codes verbatim.
+    ContentChanged { codes: Vec<String> },
     NoManifest,
     /// The image carries no embedded manifest, but its XMP names a remote one
     /// through `dcterms:provenance`, and that manifest has **not** been
@@ -224,6 +228,11 @@ pub struct ExifInfo {
     pub date_time_original: Option<String>,
     pub ai_detected: bool,
     pub ai_generator: Option<String>,
+    /// The EXIF UserComment carries the marker that iOS and macOS write into
+    /// screenshots ("Screenshot"). Read from the marker only: image
+    /// dimensions never set this, because wallpapers and exports at screen
+    /// size would be false positives.
+    pub is_screenshot: bool,
 }
 
 /// The full C2PA analysis result
@@ -351,23 +360,101 @@ fn merge_exif(result: &mut C2paAnalysisResult, exif: ExifInfo) {
 fn parse_exif_from_file(file_path: &Path) -> Option<ExifInfo> {
     let file = File::open(file_path).ok()?;
     let mut bufreader = BufReader::new(&file);
-    let exifreader = exif::Reader::new();
-    let exif = exifreader.read_from_container(&mut bufreader).ok()?;
-    
+    let exif = exif::Reader::new().read_from_container(&mut bufreader).ok()?;
+    Some(exif_info_from(&exif))
+}
+
+/// Parse EXIF metadata from the bytes of a whole image file.
+///
+/// The buffer is a complete container (JPEG, PNG, HEIF, WebP or TIFF), so it
+/// goes through `read_from_container`, the same entry point the file path
+/// uses. `read_raw` expects a bare TIFF structure and fails on any image
+/// container, which left the bytes path without EXIF for JPEG and PNG.
+fn parse_exif_from_bytes(data: &[u8]) -> Option<ExifInfo> {
+    let mut cursor = std::io::Cursor::new(data);
+    let exif = exif::Reader::new().read_from_container(&mut cursor).ok()?;
+    Some(exif_info_from(&exif))
+}
+
+/// Decode an EXIF UserComment into text.
+///
+/// The tag is UNDEFINED with an 8-byte character code prefix ("ASCII\0\0\0",
+/// "UNICODE\0", "JIS\0\0\0\0\0" or eight zero bytes). The generic display
+/// formatter prints UNDEFINED values as hex, so the prefix is stripped and the
+/// rest decoded here. Some writers use an ASCII value instead; that is
+/// accepted as is.
+fn decode_user_comment(exif: &exif::Exif) -> Option<String> {
+    let field = exif.get_field(Tag::UserComment, In::PRIMARY)?;
+    let text = match &field.value {
+        exif::Value::Undefined(bytes, _) => {
+            if bytes.len() >= 8 {
+                let (prefix, body) = bytes.split_at(8);
+                if prefix == b"UNICODE\0" {
+                    let units: Vec<u16> = body
+                        .chunks_exact(2)
+                        .map(|c| {
+                            if exif.little_endian() {
+                                u16::from_le_bytes([c[0], c[1]])
+                            } else {
+                                u16::from_be_bytes([c[0], c[1]])
+                            }
+                        })
+                        .collect();
+                    String::from_utf16_lossy(&units)
+                } else {
+                    String::from_utf8_lossy(body).into_owned()
+                }
+            } else {
+                String::from_utf8_lossy(bytes).into_owned()
+            }
+        }
+        exif::Value::Ascii(parts) => parts
+            .iter()
+            .map(|p| String::from_utf8_lossy(p).into_owned())
+            .collect::<Vec<_>>()
+            .join(" "),
+        _ => field.display_value().to_string(),
+    };
+    let cleaned = text.trim_matches(|c: char| c == '\0' || c.is_whitespace());
+    if cleaned.is_empty() {
+        None
+    } else {
+        Some(cleaned.to_string())
+    }
+}
+
+/// Is this UserComment the screenshot marker iOS and macOS write?
+///
+/// Compared after trimming whitespace, NUL padding and surrounding quotes,
+/// case-insensitively, against the whole value. A comment that merely
+/// mentions the word does not count.
+fn is_screenshot_marker(user_comment: &str) -> bool {
+    let trimmed = user_comment
+        .trim_matches(|c: char| c == '\0' || c.is_whitespace() || c == '"' || c == '\'');
+    trimmed.eq_ignore_ascii_case("screenshot")
+}
+
+/// Build the app's EXIF summary and run the AI keyword heuristics over it.
+fn exif_info_from(exif: &exif::Exif) -> ExifInfo {
     let get_field = |tag: Tag| -> Option<String> {
         exif.get_field(tag, In::PRIMARY)
-            .map(|f| f.display_value().with_unit(&exif).to_string())
+            .map(|f| f.display_value().with_unit(exif).to_string())
     };
-    
+
     let software = get_field(Tag::Software);
     let make = get_field(Tag::Make);
     let model = get_field(Tag::Model);
     let artist = get_field(Tag::Artist);
     let copyright = get_field(Tag::Copyright);
-    let user_comment = get_field(Tag::UserComment);
+    let user_comment = decode_user_comment(exif);
     let image_description = get_field(Tag::ImageDescription);
     let date_time_original = get_field(Tag::DateTimeOriginal);
-    
+
+    let is_screenshot = user_comment
+        .as_deref()
+        .map(is_screenshot_marker)
+        .unwrap_or(false);
+
     // Check all text fields for AI generator signatures
     let all_text = [
         &software,
@@ -382,10 +469,10 @@ fn parse_exif_from_file(file_path: &Path) -> Option<ExifInfo> {
     .map(|s| s.to_lowercase())
     .collect::<Vec<_>>()
     .join(" ");
-    
+
     let mut ai_detected = false;
     let mut ai_generator: Option<String> = None;
-    
+
     for gen in AI_GENERATORS {
         if all_text.contains(gen) {
             ai_detected = true;
@@ -393,13 +480,13 @@ fn parse_exif_from_file(file_path: &Path) -> Option<ExifInfo> {
             break;
         }
     }
-    
+
     // Check for specific EXIF patterns that indicate AI generation
     if let Some(ref sw) = software {
         let sw_lower = sw.to_lowercase();
         // Check for known AI tools in Software field
-        if sw_lower.contains("midjourney") 
-            || sw_lower.contains("dall-e") 
+        if sw_lower.contains("midjourney")
+            || sw_lower.contains("dall-e")
             || sw_lower.contains("stable diffusion")
             || sw_lower.contains("firefly")
             || sw_lower.contains("imagen")
@@ -411,7 +498,7 @@ fn parse_exif_from_file(file_path: &Path) -> Option<ExifInfo> {
             ai_generator = Some(sw.clone());
         }
     }
-    
+
     // Check UserComment for AI indicators (common in some AI-generated images)
     if let Some(ref comment) = user_comment {
         let comment_lower = comment.to_lowercase();
@@ -431,102 +518,8 @@ fn parse_exif_from_file(file_path: &Path) -> Option<ExifInfo> {
             }
         }
     }
-    
-    Some(ExifInfo {
-        software,
-        make,
-        model,
-        artist,
-        copyright,
-        user_comment,
-        image_description,
-        date_time_original,
-        ai_detected,
-        ai_generator,
-    })
-}
 
-/// Parse EXIF metadata from bytes
-fn parse_exif_from_bytes(data: &[u8]) -> Option<ExifInfo> {
-    let exifreader = exif::Reader::new();
-    let exif = exifreader.read_raw(data.to_vec()).ok()?;
-    
-    let get_field = |tag: Tag| -> Option<String> {
-        exif.get_field(tag, In::PRIMARY)
-            .map(|f| f.display_value().with_unit(&exif).to_string())
-    };
-    
-    let software = get_field(Tag::Software);
-    let make = get_field(Tag::Make);
-    let model = get_field(Tag::Model);
-    let artist = get_field(Tag::Artist);
-    let copyright = get_field(Tag::Copyright);
-    let user_comment = get_field(Tag::UserComment);
-    let image_description = get_field(Tag::ImageDescription);
-    let date_time_original = get_field(Tag::DateTimeOriginal);
-    
-    // Check all text fields for AI generator signatures
-    let all_text = [
-        &software,
-        &make,
-        &model,
-        &artist,
-        &user_comment,
-        &image_description,
-    ]
-    .iter()
-    .filter_map(|o| o.as_ref())
-    .map(|s| s.to_lowercase())
-    .collect::<Vec<_>>()
-    .join(" ");
-    
-    let mut ai_detected = false;
-    let mut ai_generator: Option<String> = None;
-    
-    for gen in AI_GENERATORS {
-        if all_text.contains(gen) {
-            ai_detected = true;
-            ai_generator = Some(gen.to_string());
-            break;
-        }
-    }
-    
-    if let Some(ref sw) = software {
-        let sw_lower = sw.to_lowercase();
-        if sw_lower.contains("midjourney") 
-            || sw_lower.contains("dall-e") 
-            || sw_lower.contains("stable diffusion")
-            || sw_lower.contains("firefly")
-            || sw_lower.contains("imagen")
-            || sw_lower.contains("novelai")
-            || sw_lower.contains("automatic1111")
-            || sw_lower.contains("comfyui")
-        {
-            ai_detected = true;
-            ai_generator = Some(sw.clone());
-        }
-    }
-    
-    if let Some(ref comment) = user_comment {
-        let comment_lower = comment.to_lowercase();
-        if comment_lower.contains("generated by ai")
-            || comment_lower.contains("ai generated")
-            || comment_lower.contains("created with ai")
-            || comment_lower.contains("made with ai")
-            || comment_lower.contains("prompt:")
-            || comment_lower.contains("negative prompt:")
-            || comment_lower.contains("cfg scale")
-            || comment_lower.contains("sampling steps")
-            || comment_lower.contains("seed:")
-        {
-            ai_detected = true;
-            if ai_generator.is_none() {
-                ai_generator = Some("AI Generator (from metadata)".to_string());
-            }
-        }
-    }
-    
-    Some(ExifInfo {
+    ExifInfo {
         software,
         make,
         model,
@@ -537,7 +530,8 @@ fn parse_exif_from_bytes(data: &[u8]) -> Option<ExifInfo> {
         date_time_original,
         ai_detected,
         ai_generator,
-    })
+        is_screenshot,
+    }
 }
 
 /// Analyzes a file at the given path for C2PA metadata
@@ -1013,28 +1007,67 @@ fn extract_generator_from_json(json: &Value) -> Option<String> {
     None
 }
 
-/// Returns the C2PA SDK version
-#[frb(sync)]
 /// Map a c2pa validation-status list onto the app's verification status.
 ///
 /// The library's `status_for_store` filters out every success code before it
 /// builds this list, so a non-empty list always means at least one check
-/// failed. Any fall-through to `Verified` is therefore wrong by construction,
-/// which is what the earlier substring test did: it looked for lowercase
-/// "signature", "expired" and "trust" and treated everything else as verified.
-/// Codes such as `claimSignature.mismatch` (capital S) and
-/// `assertion.dataHash.mismatch` matched none of those tests, so an image whose
-/// content no longer matches its signed hash was displayed as authentic.
+/// failed. Any fall-through to `Verified` is therefore wrong by construction.
 ///
-/// Codes are compared exactly, against the constants in c2pa-rs 0.32.7. A code
-/// that matches no category is not silently accepted: it is reported verbatim,
-/// so an unrecognised failure surfaces instead of disappearing.
-fn classify_validation_status(statuses: Option<&[c2pa::validation_status::ValidationStatus]>) -> VerificationStatus {
+/// Codes are compared exactly, against the constants in c2pa-rs 0.32.7.
+/// Precedence, strongest first:
+///
+/// 1. Asset-binding hash mismatches: the image is no longer the one that was
+///    signed. Reported as `ContentChanged` with the codes, so the interface
+///    can say what happened instead of "error".
+/// 2. `signingCredential.expired`: reported as `CertificateExpired` even when
+///    `claimSignature.mismatch` is also present. In c2pa-rs 0.32.7,
+///    `cose_validator::verify_cose` calls `check_cert(...)?`, which returns an
+///    error for an expired certificate before `validate_with_cert` runs; the
+///    claim layer then logs `claimSignature.mismatch` for that error. The
+///    signature was never checked, so calling it invalid would be wrong.
+/// 3. `claimSignature.*`: the signature itself does not verify.
+/// 4. Any other failure code is an integrity failure of the manifest itself
+///    (hashed URIs, missing or undeclared assertions, malformed claim data,
+///    unsupported algorithms, unknown codes). The signed statement cannot be
+///    relied on, so it is reported as `SignatureInvalid` rather than accepted.
+/// 5. Timestamp validity, then certificate trust problems.
+///
+/// `Error` is never produced here. It is reserved for genuine read and parse
+/// errors, where no manifest could be evaluated at all.
+fn classify_validation_status(
+    statuses: Option<&[c2pa::validation_status::ValidationStatus]>,
+) -> VerificationStatus {
     let statuses = match statuses {
         None => return VerificationStatus::Verified,
         Some(s) if s.is_empty() => return VerificationStatus::Verified,
         Some(s) => s,
     };
+    let codes: Vec<&str> = statuses.iter().map(|s| s.code()).collect();
+    classify_codes(&codes)
+}
+
+/// Asset-binding failures in c2pa-rs 0.32.7 (`validation_status.rs`): the
+/// data hash (JPEG, PNG and other non-BMFF formats), the BMFF hash (HEIF,
+/// AVIF, MP4) and the box hash. `ASSERTION_BOXHASH_UNKNOWN` is only used as an
+/// error message there and surfaces as `assertion.boxesHash.mismatch`; the
+/// prefix test covers it should a later release report it as a code.
+const CONTENT_CHANGED_CODES: [&str; 3] = [
+    "assertion.dataHash.mismatch",
+    "assertion.bmffHash.mismatch",
+    "assertion.boxesHash.mismatch",
+];
+
+fn is_content_changed_code(code: &str) -> bool {
+    CONTENT_CHANGED_CODES.contains(&code)
+        || (code.starts_with("assertion.boxesHash.") && !code.ends_with(".match"))
+}
+
+/// Classification over plain code strings, separated out so it can be tested
+/// without constructing library status objects.
+fn classify_codes(codes: &[&str]) -> VerificationStatus {
+    if codes.is_empty() {
+        return VerificationStatus::Verified;
+    }
 
     const SIGNATURE_FAILURES: [&str; 2] = ["claimSignature.mismatch", "claimSignature.missing"];
     const EXPIRY_FAILURES: [&str; 2] = ["signingCredential.expired", "timeStamp.outsideValidity"];
@@ -1046,28 +1079,47 @@ fn classify_validation_status(statuses: Option<&[c2pa::validation_status::Valida
         "timeStamp.mismatch",
     ];
 
-    let has = |set: &[&str]| statuses.iter().any(|s| set.contains(&s.code()));
+    let has = |set: &[&str]| codes.iter().any(|c| set.contains(c));
+
+    let changed: Vec<String> = codes
+        .iter()
+        .filter(|c| is_content_changed_code(c))
+        .map(|c| c.to_string())
+        .collect();
+    if !changed.is_empty() {
+        return VerificationStatus::ContentChanged { codes: changed };
+    }
+
+    // An expired signing certificate stops c2pa before the signature check,
+    // and the claim layer reports that as claimSignature.mismatch. See the
+    // function comment above.
+    if codes.contains(&"signingCredential.expired") {
+        return VerificationStatus::CertificateExpired;
+    }
 
     if has(&SIGNATURE_FAILURES) {
+        return VerificationStatus::SignatureInvalid;
+    }
+
+    let other_integrity_failure = codes.iter().any(|c| {
+        !EXPIRY_FAILURES.contains(c) && !TRUST_FAILURES.contains(c)
+    });
+    if other_integrity_failure {
         VerificationStatus::SignatureInvalid
     } else if has(&EXPIRY_FAILURES) {
         VerificationStatus::CertificateExpired
-    } else if has(&TRUST_FAILURES) {
-        VerificationStatus::CertificateUntrusted
     } else {
-        // Integrity and structural failures, including asset-binding mismatches.
-        // The prefix matters: the Dart layer treats an Error as "no manifest" and
-        // routes such images to the remote assessment. A manifest that fails
-        // validation is still a manifest, and must not be uploaded on that basis.
-        let codes: Vec<&str> = statuses.iter().map(|s| s.code()).collect();
-        VerificationStatus::Error {
-            message: format!("C2PA manifest validation failed: {}", codes.join(", ")),
-        }
+        VerificationStatus::CertificateUntrusted
     }
 }
 
+/// Returns the C2PA SDK version and the signature backend it was built with.
+///
+/// The version is the one pinned in `Cargo.lock`; a test compares the two.
+/// The backend matters: without the `openssl` feature, c2pa-rs 0.32 accepts
+/// every COSE signature through its `DummyValidator`.
 pub fn c2pa_sdk_version() -> String {
-    "c2pa-rs 0.32".to_string()
+    "c2pa-rs 0.32.7 (OpenSSL)".to_string()
 }
 
 /// Maximum manifest size this app will accept from a remote host, in bytes.
@@ -1194,4 +1246,95 @@ pub fn fetch_remote_manifest(
 #[frb(sync)]
 pub fn is_c2pa_available() -> bool {
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn classification_precedence() {
+        assert!(matches!(classify_codes(&[]), VerificationStatus::Verified));
+        assert!(matches!(
+            classify_codes(&["claimSignature.mismatch"]),
+            VerificationStatus::SignatureInvalid
+        ));
+        // Content change outranks every other finding, including a reported
+        // signature mismatch.
+        match classify_codes(&["claimSignature.mismatch", "assertion.dataHash.mismatch"]) {
+            VerificationStatus::ContentChanged { codes } => {
+                assert_eq!(codes, vec!["assertion.dataHash.mismatch".to_string()])
+            }
+            other => panic!("{other:?}"),
+        }
+        // A broken signature next to a timestamp problem stays invalid
+        // (E-sig-CA.jpg reports exactly this pair).
+        assert!(matches!(
+            classify_codes(&["timeStamp.mismatch", "claimSignature.mismatch"]),
+            VerificationStatus::SignatureInvalid
+        ));
+        for code in [
+            "assertion.dataHash.mismatch",
+            "assertion.bmffHash.mismatch",
+            "assertion.boxesHash.mismatch",
+        ] {
+            match classify_codes(&[code, "signingCredential.untrusted"]) {
+                VerificationStatus::ContentChanged { codes } => assert_eq!(codes, vec![code.to_string()]),
+                other => panic!("{code}: {other:?}"),
+            }
+        }
+        assert!(matches!(
+            classify_codes(&["assertion.hashedURI.mismatch"]),
+            VerificationStatus::SignatureInvalid
+        ));
+        assert!(matches!(
+            classify_codes(&["some.future.code"]),
+            VerificationStatus::SignatureInvalid
+        ));
+        assert!(matches!(
+            classify_codes(&["signingCredential.expired", "signingCredential.untrusted"]),
+            VerificationStatus::CertificateExpired
+        ));
+        assert!(matches!(
+            classify_codes(&["timeStamp.mismatch"]),
+            VerificationStatus::CertificateUntrusted
+        ));
+    }
+
+    /// The code pair c2pa-rs 0.32.7 reports for a manifest signed with a
+    /// certificate that has since expired, observed on the public test file
+    /// legacy/1.4/image/jpeg/nikon-20221019-building.jpeg. The signature was
+    /// never checked (check_cert returns before validate_with_cert), so this
+    /// is an expired certificate, not an invalid signature.
+    #[test]
+    fn expired_certificate_is_not_an_invalid_signature() {
+        assert!(matches!(
+            classify_codes(&["signingCredential.expired", "claimSignature.mismatch"]),
+            VerificationStatus::CertificateExpired
+        ));
+        // Order of the codes does not matter.
+        assert!(matches!(
+            classify_codes(&["claimSignature.mismatch", "signingCredential.expired"]),
+            VerificationStatus::CertificateExpired
+        ));
+        // A changed image is still reported as changed.
+        assert!(matches!(
+            classify_codes(&[
+                "signingCredential.expired",
+                "claimSignature.mismatch",
+                "assertion.dataHash.mismatch"
+            ]),
+            VerificationStatus::ContentChanged { .. }
+        ));
+    }
+
+    #[test]
+    fn screenshot_marker_matching() {
+        assert!(is_screenshot_marker("Screenshot"));
+        assert!(is_screenshot_marker("  screenshot\0\0"));
+        assert!(is_screenshot_marker("\"SCREENSHOT\""));
+        assert!(!is_screenshot_marker("Screenshot of a receipt"));
+        assert!(!is_screenshot_marker("Prompt: a screenshot"));
+        assert!(!is_screenshot_marker(""));
+    }
 }

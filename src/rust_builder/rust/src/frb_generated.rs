@@ -315,6 +315,7 @@ impl SseDecode for crate::api::c2pa_reader::ExifInfo {
         let mut var_dateTimeOriginal = <Option<String>>::sse_decode(deserializer);
         let mut var_aiDetected = <bool>::sse_decode(deserializer);
         let mut var_aiGenerator = <Option<String>>::sse_decode(deserializer);
+        let mut var_isScreenshot = <bool>::sse_decode(deserializer);
         return crate::api::c2pa_reader::ExifInfo {
             software: var_software,
             make: var_make,
@@ -326,7 +327,20 @@ impl SseDecode for crate::api::c2pa_reader::ExifInfo {
             date_time_original: var_dateTimeOriginal,
             ai_detected: var_aiDetected,
             ai_generator: var_aiGenerator,
+            is_screenshot: var_isScreenshot,
         };
+    }
+}
+
+impl SseDecode for Vec<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<String>::sse_decode(deserializer));
+        }
+        return ans_;
     }
 }
 
@@ -450,15 +464,21 @@ impl SseDecode for crate::api::c2pa_reader::VerificationStatus {
                 return crate::api::c2pa_reader::VerificationStatus::CertificateUntrusted;
             }
             4 => {
-                return crate::api::c2pa_reader::VerificationStatus::NoManifest;
+                let mut var_codes = <Vec<String>>::sse_decode(deserializer);
+                return crate::api::c2pa_reader::VerificationStatus::ContentChanged {
+                    codes: var_codes,
+                };
             }
             5 => {
+                return crate::api::c2pa_reader::VerificationStatus::NoManifest;
+            }
+            6 => {
                 let mut var_url = <String>::sse_decode(deserializer);
                 return crate::api::c2pa_reader::VerificationStatus::RemoteManifestPending {
                     url: var_url,
                 };
             }
-            6 => {
+            7 => {
                 let mut var_message = <String>::sse_decode(deserializer);
                 return crate::api::c2pa_reader::VerificationStatus::Error {
                     message: var_message,
@@ -614,6 +634,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::c2pa_reader::ExifInfo {
             self.date_time_original.into_into_dart().into_dart(),
             self.ai_detected.into_into_dart().into_dart(),
             self.ai_generator.into_into_dart().into_dart(),
+            self.is_screenshot.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -666,12 +687,15 @@ impl flutter_rust_bridge::IntoDart for crate::api::c2pa_reader::VerificationStat
             crate::api::c2pa_reader::VerificationStatus::CertificateUntrusted => {
                 [3.into_dart()].into_dart()
             }
-            crate::api::c2pa_reader::VerificationStatus::NoManifest => [4.into_dart()].into_dart(),
+            crate::api::c2pa_reader::VerificationStatus::ContentChanged { codes } => {
+                [4.into_dart(), codes.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::c2pa_reader::VerificationStatus::NoManifest => [5.into_dart()].into_dart(),
             crate::api::c2pa_reader::VerificationStatus::RemoteManifestPending { url } => {
-                [5.into_dart(), url.into_into_dart().into_dart()].into_dart()
+                [6.into_dart(), url.into_into_dart().into_dart()].into_dart()
             }
             crate::api::c2pa_reader::VerificationStatus::Error { message } => {
-                [6.into_dart(), message.into_into_dart().into_dart()].into_dart()
+                [7.into_dart(), message.into_into_dart().into_dart()].into_dart()
             }
             _ => {
                 unimplemented!("");
@@ -758,6 +782,17 @@ impl SseEncode for crate::api::c2pa_reader::ExifInfo {
         <Option<String>>::sse_encode(self.date_time_original, serializer);
         <bool>::sse_encode(self.ai_detected, serializer);
         <Option<String>>::sse_encode(self.ai_generator, serializer);
+        <bool>::sse_encode(self.is_screenshot, serializer);
+    }
+}
+
+impl SseEncode for Vec<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <String>::sse_encode(item, serializer);
+        }
     }
 }
 
@@ -859,15 +894,19 @@ impl SseEncode for crate::api::c2pa_reader::VerificationStatus {
             crate::api::c2pa_reader::VerificationStatus::CertificateUntrusted => {
                 <i32>::sse_encode(3, serializer);
             }
-            crate::api::c2pa_reader::VerificationStatus::NoManifest => {
+            crate::api::c2pa_reader::VerificationStatus::ContentChanged { codes } => {
                 <i32>::sse_encode(4, serializer);
+                <Vec<String>>::sse_encode(codes, serializer);
+            }
+            crate::api::c2pa_reader::VerificationStatus::NoManifest => {
+                <i32>::sse_encode(5, serializer);
             }
             crate::api::c2pa_reader::VerificationStatus::RemoteManifestPending { url } => {
-                <i32>::sse_encode(5, serializer);
+                <i32>::sse_encode(6, serializer);
                 <String>::sse_encode(url, serializer);
             }
             crate::api::c2pa_reader::VerificationStatus::Error { message } => {
-                <i32>::sse_encode(6, serializer);
+                <i32>::sse_encode(7, serializer);
                 <String>::sse_encode(message, serializer);
             }
             _ => {

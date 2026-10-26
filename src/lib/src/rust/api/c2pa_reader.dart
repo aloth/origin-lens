@@ -8,7 +8,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'c2pa_reader.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `cbor_to_json`, `check_json_for_ai_indicators`, `classify_validation_status`, `detect_ai_generation`, `detect_watermark_declaration`, `error`, `extract_cert_field`, `extract_generator_from_json`, `extract_model_name`, `merge_exif`, `no_manifest_with_exif`, `no_manifest`, `parse_exif_from_bytes`, `parse_exif_from_file`, `parse_manifest_reader`, `remote_manifest_pending`, `result_for_read_error`, `software_agent_to_string`
+// These functions are ignored because they are not marked as `pub`: `cbor_to_json`, `check_json_for_ai_indicators`, `classify_codes`, `classify_validation_status`, `decode_user_comment`, `detect_ai_generation`, `detect_watermark_declaration`, `error`, `exif_info_from`, `extract_cert_field`, `extract_generator_from_json`, `extract_model_name`, `is_content_changed_code`, `is_screenshot_marker`, `merge_exif`, `no_manifest_with_exif`, `no_manifest`, `parse_exif_from_bytes`, `parse_exif_from_file`, `parse_manifest_reader`, `remote_manifest_pending`, `result_for_read_error`, `software_agent_to_string`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Analyzes a file at the given path for C2PA metadata
@@ -26,6 +26,11 @@ C2paAnalysisResult analyzeC2PaFromBytes({
   mimeType: mimeType,
 );
 
+/// Returns the C2PA SDK version and the signature backend it was built with.
+///
+/// The version is the one pinned in `Cargo.lock`; a test compares the two.
+/// The backend matters: without the `openssl` feature, c2pa-rs 0.32 accepts
+/// every COSE signature through its `DummyValidator`.
 Future<String> c2PaSdkVersion() =>
     RustLib.instance.api.crateApiC2PaReaderC2PaSdkVersion();
 
@@ -229,6 +234,12 @@ class ExifInfo {
   final bool aiDetected;
   final String? aiGenerator;
 
+  /// The EXIF UserComment carries the marker that iOS and macOS write into
+  /// screenshots ("Screenshot"). Read from the marker only: image
+  /// dimensions never set this, because wallpapers and exports at screen
+  /// size would be false positives.
+  final bool isScreenshot;
+
   const ExifInfo({
     this.software,
     this.make,
@@ -240,6 +251,7 @@ class ExifInfo {
     this.dateTimeOriginal,
     required this.aiDetected,
     this.aiGenerator,
+    required this.isScreenshot,
   });
 
   @override
@@ -253,7 +265,8 @@ class ExifInfo {
       imageDescription.hashCode ^
       dateTimeOriginal.hashCode ^
       aiDetected.hashCode ^
-      aiGenerator.hashCode;
+      aiGenerator.hashCode ^
+      isScreenshot.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -269,7 +282,8 @@ class ExifInfo {
           imageDescription == other.imageDescription &&
           dateTimeOriginal == other.dateTimeOriginal &&
           aiDetected == other.aiDetected &&
-          aiGenerator == other.aiGenerator;
+          aiGenerator == other.aiGenerator &&
+          isScreenshot == other.isScreenshot;
 }
 
 /// Information about the content signer
@@ -315,6 +329,13 @@ sealed class VerificationStatus with _$VerificationStatus {
       VerificationStatus_CertificateExpired;
   const factory VerificationStatus.certificateUntrusted() =
       VerificationStatus_CertificateUntrusted;
+
+  /// The manifest's signature verifies, but the asset-binding hash does not
+  /// match the image: the pixels or the container were changed after
+  /// signing. `codes` lists the failing c2pa status codes verbatim.
+  const factory VerificationStatus.contentChanged({
+    required List<String> codes,
+  }) = VerificationStatus_ContentChanged;
   const factory VerificationStatus.noManifest() = VerificationStatus_NoManifest;
 
   /// The image carries no embedded manifest, but its XMP names a remote one

@@ -333,8 +333,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ExifInfo dco_decode_exif_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 10)
-      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return ExifInfo(
       software: dco_decode_opt_String(arr[0]),
       make: dco_decode_opt_String(arr[1]),
@@ -346,7 +346,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       dateTimeOriginal: dco_decode_opt_String(arr[7]),
       aiDetected: dco_decode_bool(arr[8]),
       aiGenerator: dco_decode_opt_String(arr[9]),
+      isScreenshot: dco_decode_bool(arr[10]),
     );
+  }
+
+  @protected
+  List<String> dco_decode_list_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_String).toList();
   }
 
   @protected
@@ -430,12 +437,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 3:
         return VerificationStatus_CertificateUntrusted();
       case 4:
-        return VerificationStatus_NoManifest();
+        return VerificationStatus_ContentChanged(
+          codes: dco_decode_list_String(raw[1]),
+        );
       case 5:
+        return VerificationStatus_NoManifest();
+      case 6:
         return VerificationStatus_RemoteManifestPending(
           url: dco_decode_String(raw[1]),
         );
-      case 6:
+      case 7:
         return VerificationStatus_Error(message: dco_decode_String(raw[1]));
       default:
         throw Exception("unreachable");
@@ -553,6 +564,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_dateTimeOriginal = sse_decode_opt_String(deserializer);
     var var_aiDetected = sse_decode_bool(deserializer);
     var var_aiGenerator = sse_decode_opt_String(deserializer);
+    var var_isScreenshot = sse_decode_bool(deserializer);
     return ExifInfo(
       software: var_software,
       make: var_make,
@@ -564,7 +576,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       dateTimeOriginal: var_dateTimeOriginal,
       aiDetected: var_aiDetected,
       aiGenerator: var_aiGenerator,
+      isScreenshot: var_isScreenshot,
     );
+  }
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <String>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_String(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -684,11 +709,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 3:
         return VerificationStatus_CertificateUntrusted();
       case 4:
-        return VerificationStatus_NoManifest();
+        var var_codes = sse_decode_list_String(deserializer);
+        return VerificationStatus_ContentChanged(codes: var_codes);
       case 5:
+        return VerificationStatus_NoManifest();
+      case 6:
         var var_url = sse_decode_String(deserializer);
         return VerificationStatus_RemoteManifestPending(url: var_url);
-      case 6:
+      case 7:
         var var_message = sse_decode_String(deserializer);
         return VerificationStatus_Error(message: var_message);
       default:
@@ -791,6 +819,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.dateTimeOriginal, serializer);
     sse_encode_bool(self.aiDetected, serializer);
     sse_encode_opt_String(self.aiGenerator, serializer);
+    sse_encode_bool(self.isScreenshot, serializer);
+  }
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_String(item, serializer);
+    }
   }
 
   @protected
@@ -911,13 +949,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(2, serializer);
       case VerificationStatus_CertificateUntrusted():
         sse_encode_i_32(3, serializer);
-      case VerificationStatus_NoManifest():
+      case VerificationStatus_ContentChanged(codes: final codes):
         sse_encode_i_32(4, serializer);
-      case VerificationStatus_RemoteManifestPending(url: final url):
+        sse_encode_list_String(codes, serializer);
+      case VerificationStatus_NoManifest():
         sse_encode_i_32(5, serializer);
+      case VerificationStatus_RemoteManifestPending(url: final url):
+        sse_encode_i_32(6, serializer);
         sse_encode_String(url, serializer);
       case VerificationStatus_Error(message: final message):
-        sse_encode_i_32(6, serializer);
+        sse_encode_i_32(7, serializer);
         sse_encode_String(message, serializer);
     }
   }

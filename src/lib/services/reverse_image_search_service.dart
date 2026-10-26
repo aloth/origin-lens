@@ -178,10 +178,10 @@ class ReverseImageSearchService {
     );
     debugPrint('ReverseImageSearch: Service configured');
     debugPrint(
-      '  SerpAPI key: ${apiKey.isNotEmpty ? "${apiKey.substring(0, 8)}..." : "NOT SET"}',
+      '  SerpAPI key: ${apiKey.isNotEmpty ? "set" : "not set"}',
     );
     debugPrint(
-      '  imgbb key: ${imgbbApiKey?.isNotEmpty == true ? "${imgbbApiKey!.substring(0, 8)}..." : "NOT SET"}',
+      '  imgbb key: ${imgbbApiKey?.isNotEmpty == true ? "set" : "not set"}',
     );
     debugPrint('  isConfigured: $_isConfigured');
     debugPrint('  canSearchLocalFiles: $canSearchLocalFiles');
