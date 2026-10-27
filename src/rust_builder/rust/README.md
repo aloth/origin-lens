@@ -29,14 +29,14 @@ This directory contains the Rust library for C2PA manifest parsing using the off
 After modifying Rust code, regenerate the Dart bindings:
 
 ```bash
-cd /path/to/origin-lens-code
+cd /path/to/origin-lens/src
 flutter_rust_bridge_codegen generate
 ```
 
 ## Build for iOS
 
 ```bash
-cd /path/to/origin-lens-code
+cd /path/to/origin-lens/src
 flutter build ios
 ```
 

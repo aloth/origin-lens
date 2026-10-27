@@ -40,21 +40,25 @@ This directory contains the Flutter source code for Origin Lens. For an overview
 ## Project Structure
 
 ```
-origin-lens-code/
+src/
 ├── lib/
 │   ├── main.dart                 # App entry point, RustLib initialization
+│   ├── verdict.dart              # Verdict levels and their precedence
 │   ├── screens/
-│   │   ├── dashboard_view.dart   # Home screen with app info
+│   │   ├── main_screen.dart      # Tab bar (Analyze, Learn)
 │   │   ├── analyze_view.dart     # Image analysis UI
 │   │   └── faq_view.dart         # FAQ and help content
-│   └── services/
-│       └── c2pa_service.dart     # Dart interface to Rust C2PA library
+│   ├── services/
+│   │   └── c2pa_service.dart     # Dart interface to Rust C2PA library
+│   ├── widgets/                  # Verdict card and shared widgets
+│   └── src/rust/                 # Generated Dart bindings
 ├── rust_builder/
 │   └── rust/
 │       ├── Cargo.toml            # Rust dependencies (c2pa, flutter_rust_bridge)
-│       └── src/
-│           └── api/
-│               └── c2pa_reader.rs # Native C2PA analysis implementation
+│       ├── src/
+│       │   └── api/
+│       │       └── c2pa_reader.rs # Native C2PA analysis implementation
+│       └── tests/                # Fixture tests
 └── ios/                          # iOS-specific configuration
 ```
 
