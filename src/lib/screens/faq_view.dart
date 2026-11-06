@@ -37,7 +37,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
       question: 'How does AI Detection work?',
       answer:
           'Origin Lens uses multiple methods to detect AI-generated content:\n\n'
-          '• C2PA Metadata: Cryptographically signed data embedded by AI tools like Adobe Firefly and Microsoft Designer\n\n'
+          '• C2PA Metadata: Cryptographically signed data that some AI image tools embed in the files they produce\n\n'
           '• Digital Source Type: IPTC standards like "trainedAlgorithmicMedia" that indicate AI generation\n\n'
           '• Claim Generator Analysis: We analyze the software that created the C2PA manifest to identify AI tools',
     ),
@@ -55,9 +55,9 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
       question: 'Which AI tools support C2PA?',
       answer:
           'Currently supported AI tools:\n\n'
-          '✅ Adobe Firefly (firefly.adobe.com)\n'
-          '✅ Microsoft Designer (designer.microsoft.com)\n'
-          '✅ Bing Image Creator (bing.com/create)\n'
+          '✅ Adobe Firefly\n'
+          '✅ Microsoft Designer\n'
+          '✅ Bing Image Creator\n'
           '✅ Shutterstock AI\n'
           '✅ Getty Images AI\n\n'
           'Not yet supported:\n'
@@ -89,13 +89,10 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
       question: 'How do I test C2PA detection?',
       answer:
           'To verify C2PA detection works:\n\n'
-          '1. Go to firefly.adobe.com (free account)\n'
-          '2. Generate any image\n'
-          '3. Click the "Download" button (not screenshot!)\n'
-          '4. Choose PNG or JPG format\n'
-          '5. Save to Files app (not Photos)\n'
-          '6. Open Origin Lens and use "Select from Files"\n\n'
-          'The result should show "AI-Generated (Signed)": signed Content Credentials from Adobe declare the image as AI-generated.',
+          '1. Download an image from the public C2PA test files (github.com/c2pa-org/public-testfiles)\n'
+          '2. Save it to the Files app (not Photos)\n'
+          '3. Open Origin Lens and use "Select from Files"\n\n'
+          'The result shows what the file\'s Content Credentials record. Some test files are deliberately broken, so a red result can be correct.',
     ),
   ];
 
@@ -259,7 +256,7 @@ class _FaqViewState extends State<FaqView> with SingleTickerProviderStateMixin {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'In the age of deepfakes and misinformation, knowing the origin of media is crucial. This tool empowers you to fact-check visual content before sharing it.',
+            'Knowing where an image comes from helps you judge it before you share it. Origin Lens shows what an image\'s own credentials and metadata say about its origin.',
             style: AppTypography.bodyMedium.copyWith(
               color: theme.colorScheme.onSurface,
               height: 1.5,

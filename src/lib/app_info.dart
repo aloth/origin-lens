@@ -5,7 +5,7 @@
 library;
 
 /// Fallback for the About card while the platform version is loading.
-const String kAppVersion = '1.4.1';
+const String kAppVersion = '1.4.2';
 
 /// Text copied by the "Cite Origin Lens" row: both papers, blank line between.
 const String kCiteOriginLensText =

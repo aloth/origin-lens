@@ -2,7 +2,7 @@ name: origin_lens
 description: "Verify media authenticity with C2PA metadata detection."
 publish_to: 'none'
 
-version: 1.4.1+9
+version: 1.4.2+10
 
 environment:
   sdk: ^3.10.1

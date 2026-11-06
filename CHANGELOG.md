@@ -4,6 +4,10 @@ Origin Lens verifies image authenticity on device. It reads C2PA Content Credent
 
 This file records what changed in each release. Entries before 1.4.0 were written from the release notes published at the time.
 
+## 1.4.2 (unreleased)
+
+- Learn tab: the C2PA test uses the public C2PA test files instead of generating an image, the list of AI tools no longer links to them, and the introduction is reworded.
+
 ## 1.4.1 - 2026-10-26
 
 ### Color-coded verdicts
