@@ -2,14 +2,9 @@
 
 [![App Store](https://img.shields.io/badge/App_Store-Download-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/us/app/origin-lens/id6756628121)
 [![Platform](https://img.shields.io/badge/Platform-iOS_13+_|_iPadOS_13+-lightgrey?logo=apple)](https://apps.apple.com/us/app/origin-lens/id6756628121)
-[![Flutter](https://img.shields.io/badge/Flutter-Dart_3.10-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Rust](https://img.shields.io/badge/Rust-c2pa_0.32-000000?logo=rust&logoColor=white)](https://github.com/contentauth/c2pa-rs)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Paper](https://img.shields.io/badge/Paper-doi%3A10.1145%2F3795513.3806658-b31b1b)](https://doi.org/10.1145/3795513.3806658)
-[![Preprint](https://img.shields.io/badge/Preprint-arXiv%3A2602.03423-B31B1B)](https://arxiv.org/abs/2602.03423)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22303807.svg)](https://doi.org/10.5281/zenodo.22303807)
-[![GitHub stars](https://img.shields.io/github/stars/aloth/origin-lens?style=social)](https://github.com/aloth/origin-lens/stargazers)
-[![Mastodon](https://img.shields.io/badge/Mastodon-@xlth-6364FF?logo=mastodon&logoColor=white)](https://mastodon.social/@xlth)
 
 <p align="center">
   <img src="figures/origin-lens-c2pa-image-verification-privacy-ai-detection-wide.png" alt="Origin Lens — AI-powered image verification and content authenticity on mobile" width="700">
