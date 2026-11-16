@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Origin Lens — C2PA Image Verification & AI Detection for iPhone & iPad</title>
-<meta name="description" content="Origin Lens verifies image authenticity with C2PA Content Credentials, EXIF metadata and SynthID. Detect AI-generated content, verify digital signatures, and reveal full edit history. Privacy-first, on-device iOS app.">
+<title>Origin Lens - C2PA Image Verification with Color-Coded Verdicts for iPhone & iPad</title>
+<meta name="description" content="Origin Lens shows what an image says about its own origin. Every check opens with a color-coded verdict from C2PA Content Credentials, verified on your iPhone or iPad, plus EXIF metadata and edit history. Free and open source.">
 <link rel="canonical" href="https://aloth.github.io/origin-lens/">
-<meta property="og:title" content="Origin Lens — C2PA Image Verification & AI Detection">
-<meta property="og:description" content="Verify image authenticity with cryptographic C2PA provenance. Detect AI-generated content on-device. Free, open-source iOS app.">
+<meta property="og:title" content="Origin Lens - See what an image says about itself">
+<meta property="og:description" content="A color-coded verdict for every image: Content Credentials verified on device, plus EXIF metadata and edit history. Free, open-source iOS app.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://aloth.github.io/origin-lens/">
 <meta property="og:image" content="https://raw.githubusercontent.com/aloth/origin-lens/main/figures/origin-lens-image-verification-ai-detection-hero.png">
@@ -21,7 +21,9 @@
   "applicationCategory": "https://schema.org/UtilitiesApplication",
   "author": { "@type": "Person", "name": "Alexander Loth", "url": "https://alexloth.com/" },
   "image": "https://raw.githubusercontent.com/aloth/origin-lens/main/figures/origin-lens-image-verification-ai-detection-hero.png",
-  "description": "Origin Lens verifies image authenticity with C2PA Content Credentials, EXIF metadata and SynthID. Detect AI-generated content, verify digital signatures, and reveal full edit history. Privacy-first, on-device iOS app.",
+  "description": "Origin Lens shows what an image says about its own origin. Every check opens with a color-coded verdict from C2PA Content Credentials, verified on your iPhone or iPad, plus EXIF metadata and edit history. Free and open source.",
+  "softwareVersion": "1.4.2",
+  "dateModified": "2026-11-15",
   "url": "https://aloth.github.io/origin-lens/",
   "installUrl": "https://apps.apple.com/us/app/origin-lens/id6756628121",
   "license": "https://www.gnu.org/licenses/gpl-3.0",
@@ -29,6 +31,62 @@
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "citation": ["https://doi.org/10.1145/3795513.3806658", "https://arxiv.org/abs/2602.03423"],
   "sameAs": "https://github.com/aloth/origin-lens"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Origin Lens?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Origin Lens helps you check where a digital image comes from. On your device, it reads C2PA Content Credentials, verifies their signature, and checks whether the image was changed after signing. An optional reverse image search shows where else the image has appeared online, as context for your own judgment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is C2PA?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "C2PA (Coalition for Content Provenance and Authenticity) is an open technical standard that allows publishers to embed tamper-evident information about who created a piece of content and how it was altered. Origin Lens reads this data and shows what the credentials record about how the image was made and edited."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does a yellow verdict mean?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "That there is nothing Origin Lens can verify: the image has no Content Credentials, is a screenshot, points to credentials elsewhere, or its certificate is expired or could not be validated. Most images carry no credentials at all, so yellow alone is not a sign of manipulation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why might an AI image not be detected?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Most AI tools do not embed C2PA metadata yet. Taking a screenshot instead of downloading removes all metadata, social media platforms strip C2PA on upload, and many image editors remove it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I test C2PA detection?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Download an image from the public C2PA test files (github.com/c2pa-org/public-testfiles), save it to the Files app (not Photos), and open it in Origin Lens with \"Select from Files\". The result shows what the file's Content Credentials record. Some test files are deliberately broken, so a red result can be correct."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What leaves my device?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nothing during verification: C2PA and EXIF analysis run on your device. Three optional features use the network, and each asks first. The AI opinion sends the image to the Google Gemini API. Reverse image search sends the image, or its web address, to the services named in the prompt (imgbb and SerpAPI, or Google, Bing and Yandex directly). Fetching credentials held elsewhere contacts the host the image names, but does not send your image."
+      }
+    }
+  ]
 }
 </script>
 <style>
@@ -42,7 +100,7 @@ h1{font-size:44px;line-height:1.15;margin-bottom:16px;letter-spacing:-1px}
 h1 span{color:var(--teal)}
 .hero p{font-size:19px;color:var(--muted);max-width:640px;margin:0 auto 28px}
 .app-store-btn img{height:54px}
-.hero-image{max-width:100%;margin-top:40px;border-radius:16px}
+.hero-image{display:block;max-width:100%;margin:40px auto 0;border-radius:16px}
 .features{padding:40px 0}
 .features h2{text-align:center;font-size:32px;margin-bottom:8px}
 .subtitle{text-align:center;color:var(--muted);margin-bottom:40px}
@@ -54,6 +112,18 @@ h1 span{color:var(--teal)}
 .cta{text-align:center;padding:60px 24px}
 .paper{text-align:center;padding:0 24px 40px;color:var(--muted);font-size:15px}
 .paper a{color:var(--teal)}
+.verdicts{padding:40px 0 20px}
+.verdicts h2,.faq h2{text-align:center;font-size:32px;margin-bottom:8px}
+.verdict-list{list-style:none;display:grid;gap:10px}
+.verdict-list li{background:var(--card);border:1px solid #e8edf3;border-radius:12px;padding:14px 18px 14px 14px;display:flex;gap:14px;align-items:flex-start;font-size:15px;color:var(--muted)}
+.verdict-list b{color:var(--ink)}
+.dot{flex:0 0 14px;height:14px;border-radius:50%;margin-top:5px}
+.g{background:#15803d}.p{background:#7e22ce}.r{background:#b91c1c}.y{background:#ca8a04}
+.note{text-align:center;color:var(--muted);font-size:15px;margin-top:16px}
+.faq{padding:40px 0}
+.faq details{background:var(--card);border:1px solid #e8edf3;border-radius:12px;padding:14px 18px;margin-bottom:10px}
+.faq summary{font-weight:600;cursor:pointer}
+.faq details p{color:var(--muted);font-size:15px;margin-top:8px}
 footer{text-align:center;padding:40px 24px;color:var(--muted);font-size:14px;border-top:1px solid #e8edf3}
 footer a{color:var(--teal);text-decoration:none}
 </style>
@@ -62,12 +132,24 @@ footer a{color:var(--teal);text-decoration:none}
 
 <section class="hero">
   <div class="hero-badge">🔍 C2PA · EXIF · SynthID · On-device</div>
-  <h1>Verify what's real.<br><span>Detect what's fake.</span></h1>
-  <p>Origin Lens analyzes images for C2PA Content Credentials, EXIF metadata and SynthID to detect AI-generated content, verify digital signatures, and reveal the complete edit history of any image. Core verification happens on your device.</p>
+  <h1>Check where an image comes from.<br><span>See what it says about itself.</span></h1>
+  <p>Origin Lens reads an image's C2PA Content Credentials, verifies their signature on your device, and opens every result with a color-coded verdict. EXIF metadata and the edit history are shown alongside. Yellow means there is nothing to verify, not that an image is fake.</p>
   <a href="https://apps.apple.com/us/app/origin-lens/id6756628121" class="app-store-btn">
     <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store">
   </a>
   <img src="https://raw.githubusercontent.com/aloth/origin-lens/main/figures/origin-lens-image-verification-ai-detection-hero.png" alt="Origin Lens app verifying image authenticity and content provenance" class="hero-image" loading="eager">
+</section>
+
+<section class="verdicts wrap" id="verdicts">
+  <h2>A color-coded verdict for every image</h2>
+  <p class="subtitle">New in 1.4.2 on the App Store. The color follows a fixed order: red over purple over green over yellow.</p>
+  <ul class="verdict-list">
+    <li><span class="dot g"></span><span><b>Green: Content Credentials Valid.</b> The signature is valid and the image is unchanged since signing. The signer is not checked against a trust list, and the result says so.</span></li>
+    <li><span class="dot p"></span><span><b>Purple: AI-Generated (Signed).</b> Valid, signed credentials declare the image as AI-generated.</span></li>
+    <li><span class="dot r"></span><span><b>Red: Credentials Invalid or Credentials Don't Match This Image.</b> The credentials fail validation, or the image was changed after it was signed.</span></li>
+    <li><span class="dot y"></span><span><b>Yellow: nothing to verify.</b> No Content Credentials, a screenshot, credentials held elsewhere, an expired certificate, or a signer that could not be validated.</span></li>
+  </ul>
+  <p class="note">Most images carry no Content Credentials at all, so yellow alone is not a sign of manipulation.</p>
 </section>
 
 <section class="features wrap">
@@ -77,24 +159,35 @@ footer a{color:var(--teal);text-decoration:none}
     <div class="feature-card">
       <div class="feature-icon">🔐</div>
       <h3>C2PA Content Credentials</h3>
-      <p>Cryptographically verify Content Credentials to confirm who created an image and how it was edited.</p>
+      <p>Verify the signature of Content Credentials on device and see what they record about who created an image and how it was edited.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🤖</div>
-      <h3>AI-Generation Detection</h3>
-      <p>Detect AI-generated content from multiple sources, including SynthID watermark signals.</p>
+      <h3>AI Generation Signals</h3>
+      <p>Signed credentials that declare AI generation get their own verdict. AI tool names in unsigned metadata appear as a note, and an optional, experimental AI opinion from Gemini is labeled as such.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🗂️</div>
       <h3>Full EXIF & Edit History</h3>
-      <p>Reveal complete provenance and metadata, exposing the entire edit trail of any image.</p>
+      <p>EXIF details for every image that carries them, and the edit history recorded in its Content Credentials.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">📱</div>
       <h3>On-Device & Private</h3>
-      <p>Core verification runs locally on your iPhone or iPad. Your images stay yours.</p>
+      <p>Verification runs on your iPhone or iPad. Optional online checks ask first and name every service your image is sent to.</p>
     </div>
   </div>
+</section>
+
+<section class="faq wrap" id="faq">
+  <h2>FAQ</h2>
+  <details><summary>What is Origin Lens?</summary><p>Origin Lens helps you check where a digital image comes from. On your device, it reads C2PA Content Credentials, verifies their signature, and checks whether the image was changed after signing. An optional reverse image search shows where else the image has appeared online, as context for your own judgment.</p></details>
+  <details><summary>What is C2PA?</summary><p>C2PA (Coalition for Content Provenance and Authenticity) is an open technical standard that allows publishers to embed tamper-evident information about who created a piece of content and how it was altered. Origin Lens reads this data and shows what the credentials record about how the image was made and edited.</p></details>
+  <details><summary>What does a yellow verdict mean?</summary><p>That there is nothing Origin Lens can verify: the image has no Content Credentials, is a screenshot, points to credentials elsewhere, or its certificate is expired or could not be validated. Most images carry no credentials at all, so yellow alone is not a sign of manipulation.</p></details>
+  <details><summary>Why might an AI image not be detected?</summary><p>Most AI tools do not embed C2PA metadata yet. Taking a screenshot instead of downloading removes all metadata, social media platforms strip C2PA on upload, and many image editors remove it.</p></details>
+  <details><summary>How do I test C2PA detection?</summary><p>Download an image from the public C2PA test files (github.com/c2pa-org/public-testfiles), save it to the Files app (not Photos), and open it in Origin Lens with "Select from Files". The result shows what the file's Content Credentials record. Some test files are deliberately broken, so a red result can be correct.</p></details>
+  <details><summary>What leaves my device?</summary><p>Nothing during verification: C2PA and EXIF analysis run on your device. Three optional features use the network, and each asks first. The AI opinion sends the image to the Google Gemini API. Reverse image search sends the image, or its web address, to the services named in the prompt (imgbb and SerpAPI, or Google, Bing and Yandex directly). Fetching credentials held elsewhere contacts the host the image names, but does not send your image.</p></details>
+  <p class="note">Details: <a href="https://github.com/aloth/origin-lens/blob/main/privacy_policy.md">Privacy Policy</a></p>
 </section>
 
 <section class="cta">

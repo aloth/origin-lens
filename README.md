@@ -31,11 +31,33 @@ Get Origin Lens on your iPhone or iPad to start verifying image authenticity tod
 | <img src="screenshots/origin-lens-analyze-image-home.png" alt="Origin Lens home screen: verify image authenticity from gallery, Files, or a URL" width="240"> | <img src="screenshots/origin-lens-analysis-results-exif.png" alt="Analysis result showing no C2PA credentials found, with EXIF camera metadata" width="240"> | <img src="screenshots/origin-lens-context-warning-sources.png" alt="Context warning listing 206 sources where the image has appeared online" width="240"> |
 | Analyze from the photo library, the Files app, or a pasted URL. | Verification state and EXIF metadata, here an image with no C2PA manifest and a Nikon camera signature. | Optional reverse image search: where else the image appears, and when it was first seen. |
 
+These screenshots were taken before version 1.4.2 and do not show the color-coded verdict band yet; the result card now opens with one of the verdicts listed under [Color-coded verdicts](#color-coded-verdicts).
+
 Origin Lens runs on iPad with the same verification path:
 
 | | |
 |:---:|:---:|
 | <img src="screenshots/origin-lens-ipad-analyze-image-home.png" alt="Origin Lens home screen on iPad" width="320"> | <img src="screenshots/origin-lens-ipad-analysis-results-exif.png" alt="Analysis result on iPad with EXIF metadata and reverse image search" width="320"> |
+
+---
+
+## Color-coded verdicts
+
+Since version 1.4.2 on the App Store, every result opens with a colored band, so you see at a glance what an image's Content Credentials say. The color follows a fixed order: red over purple over green over yellow.
+
+| Verdict | Color | Meaning |
+|---|---|---|
+| Content Credentials Valid | green | The signature is valid and the image is unchanged since signing. The signer is not checked against a trust list, and the result says so. |
+| AI-Generated (Signed) | purple | Valid, signed credentials declare the image as AI-generated. |
+| Credentials Invalid | red | The credentials fail validation, so do not rely on their claims. |
+| Credentials Don't Match This Image | red | The image was changed after it was signed. |
+| Certificate Expired | yellow | The signing certificate has expired, so the signature could not be checked. |
+| Signer Not Verified | yellow | The signing certificate could not be validated. |
+| No Content Credentials | yellow | Most images carry none, which alone is not a sign of manipulation. |
+| Screenshot | yellow | A screenshot never carries the original's credentials, so look for the original file. |
+| Credentials Held Elsewhere | yellow | The image points to credentials on another server that have not been fetched. |
+
+Yellow means there is nothing Origin Lens can verify. It is not a verdict that an image is fake. AI tool names found only in unsigned metadata appear as a note and never decide the verdict.
 
 ---
 
@@ -60,6 +82,7 @@ Identify AI-generated content from multiple sources.
 - **C2PA assertions analysis** – Detect AI generators from standard Content Credentials
 - **EXIF metadata parsing** – Find AI signatures in image metadata
 - **Multi-source detection** – Combines C2PA, EXIF, and SynthID for comprehensive coverage
+- **Experimental AI opinion** – For images without Content Credentials, you can ask Google Gemini for an opinion, shown as "AI Opinion (Gemini, experimental)" in neutral colors. It is an assessment, not a cryptographic proof, and it sends the image only after you confirm
 - **50+ AI generators detected** – Midjourney, DALL-E, Stable Diffusion, Adobe Firefly, and more
 - **Detection source transparency** – Shows whether AI was detected via C2PA, EXIF, or SynthID
 
@@ -74,7 +97,7 @@ See every action performed on an image.
 
 ### EXIF Metadata Analysis
 
-Access detailed image metadata.
+Access detailed image metadata. EXIF details are shown for every image that carries them, with or without Content Credentials, including images opened from a web address.
 
 - **Camera information** – Make, model, and settings
 - **Software details** – Applications used to create or edit the image
@@ -86,10 +109,10 @@ Access detailed image metadata.
 
 Find where images have appeared online.
 
-- **Multi-engine search** – Searches across Bing, Yandex, and Google
+- **Named services** – The prompt names every service your image is sent to: with the built-in keys, the image is stored for five minutes on imgbb and its address is sent to SerpAPI, which searches Google; without them, it goes directly to Google, Bing and Yandex
 - **Context verification** – Detect out-of-context or misattributed images
 - **Smart filtering** – Removes irrelevant results like login pages
-- **Privacy notice** – Clear warning before uploading to external services
+- **Privacy notice** – You confirm before anything is uploaded
 - **Bring your own keys** – Use your own API keys for enhanced privacy
 
 > **Note:** This optional feature uploads images to external search services. A clear privacy note is shown before use.
@@ -110,7 +133,7 @@ Analyze images from anywhere.
 Select images from your photo library, files, or paste a URL to analyze any image for Content Credentials and metadata.
 
 ### ✅ Verification Status
-Clear visual indicators show whether content is verified, has signature issues, expired certificates, or no C2PA data.
+A color-coded verdict opens every result: green for valid Content Credentials, purple for signed AI generation, red for credentials that fail or no longer match the image, and yellow when there is nothing to verify. See [Color-coded verdicts](#color-coded-verdicts).
 
 ### 🤖 AI Detection Badge
 Prominently displays when content is detected as AI-generated, showing the generator name and detection method.
@@ -133,6 +156,28 @@ Analyze images directly from the web without downloading them first.
 - ✅ **Transparent remote features** – Reverse image search clearly warns before uploading
 - ✅ **Bring your own API keys** – Use personal keys for external services
 - ✅ **Privacy first** – Read our [Privacy Policy](https://github.com/aloth/origin-lens/blob/main/privacy_policy.md)
+
+---
+
+## FAQ
+
+**What is Origin Lens?**
+Origin Lens helps you check where a digital image comes from. On your device, it reads C2PA Content Credentials, verifies their signature, and checks whether the image was changed after signing. An optional reverse image search shows where else the image has appeared online, as context for your own judgment.
+
+**What is C2PA?**
+C2PA (Coalition for Content Provenance and Authenticity) is an open technical standard that allows publishers to embed tamper-evident information about who created a piece of content and how it was altered. Origin Lens reads this data and shows what the credentials record about how the image was made and edited.
+
+**What does a yellow verdict mean?**
+That there is nothing Origin Lens can verify: the image has no Content Credentials, is a screenshot, points to credentials elsewhere, or its certificate is expired or could not be validated. Most images carry no credentials at all, so yellow alone is not a sign of manipulation.
+
+**Why might an AI image not be detected?**
+Most AI tools do not embed C2PA metadata yet. Taking a screenshot instead of downloading removes all metadata, social media platforms strip C2PA on upload, and many image editors remove it.
+
+**How do I test C2PA detection?**
+Download an image from the [public C2PA test files](https://github.com/c2pa-org/public-testfiles), save it to the Files app (not Photos), and open it in Origin Lens with "Select from Files". The result shows what the file's Content Credentials record. Some test files are deliberately broken, so a red result can be correct.
+
+**What leaves my device?**
+Nothing during verification: C2PA and EXIF analysis run on your device. Three optional features use the network, and each asks first. The AI opinion sends the image to the Google Gemini API. Reverse image search sends the image, or its web address, to the services named in the prompt (imgbb and SerpAPI, or Google, Bing and Yandex directly). Fetching credentials held elsewhere contacts the host the image names, but does not send your image. Details are in the [Privacy Policy](privacy_policy.md).
 
 ---
 
@@ -169,7 +214,7 @@ The first is the one to cite.
 
 ### How to Cite
 
-If you use Origin Lens or its underlying research in your work, please cite our paper:
+If you use Origin Lens or its underlying research in your work, please cite our paper. In the app, "Cite Origin Lens" in the Learn tab copies references to both papers.
 
 > **Origin Lens: Reclaiming Trust on the AI-Mediated Web Through On-Device Image Provenance Verification**  
 > Alexander Loth, Dominique Conceicao Rosario, Peter Ebinger, Martin Kappes, Marc-Oliver Pahl  
