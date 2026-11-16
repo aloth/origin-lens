@@ -18,8 +18,8 @@ authors:
     orcid: "https://orcid.org/0000-0001-5241-3809"
 repository-code: "https://github.com/aloth/origin-lens"
 url: "https://github.com/aloth/origin-lens"
-version: "1.4.1"
-date-released: "2026-10-26"
+version: "1.4.2"
+date-released: "2026-11-15"
 license: GPL-3.0
 identifiers:
   - type: doi

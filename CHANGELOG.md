@@ -4,11 +4,21 @@ Origin Lens verifies image authenticity on device. It reads C2PA Content Credent
 
 This file records what changed in each release. Entries before 1.4.0 were written from the release notes published at the time.
 
-## 1.4.2 (unreleased)
+## 1.4.2 - 2026-11-15
 
-- Learn tab: the C2PA test uses the public C2PA test files instead of generating an image, the list of AI tools no longer links to them, and the introduction is reworded.
+First App Store release with the changes of 1.4.1: color-coded verdicts, signature validation with OpenSSL, the system photo picker for the Gallery button, EXIF details for every image that carries them, the Gemini card as an experimental AI opinion, a reverse image search prompt that names every service, and the "Cite Origin Lens" row in the Learn tab. See 1.4.1 below for details. App Store build 10 was built from commit d6ca5b3.
+
+### Changes in 1.4.2
+
+- Learn tab: the FAQ answer on testing C2PA detection points to the public C2PA test files (github.com/c2pa-org/public-testfiles) instead of asking you to generate an image with an online AI tool. The test files carry known credentials and include deliberately broken ones, so a red result can be correct.
+- Learn tab: the list of AI tools that support C2PA keeps the names but no longer links to the tools, and the answer on AI detection no longer names specific tools.
+- Learn tab: the introduction describes what the app checks: what an image's own credentials and metadata say about its origin.
+- The unused home view no longer contains a hard-coded list of sample analyses. Nothing changes on screen.
+- The build documentation lists the current project structure, and the Rust codegen and build commands start from `src/`.
 
 ## 1.4.1 - 2026-10-26
+
+Released as source code and on Zenodo; not released on the App Store. Its changes reached App Store users with 1.4.2.
 
 ### Color-coded verdicts
 
